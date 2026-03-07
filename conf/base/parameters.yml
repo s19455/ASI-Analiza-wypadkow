@@ -1,0 +1,25 @@
+test_size: 0.2
+random_state: 42
+target_column: "Injury Severity"
+
+severity_mapping:
+  NO_INJURY:
+    - "NO APPARENT INJURY"
+  MINOR:
+    - "POSSIBLE INJURY"
+    - "SUSPECTED MINOR INJURY"
+  SERIOUS:
+    - "SUSPECTED SERIOUS INJURY"
+    - "FATAL INJURY"
+
+columns_to_drop:
+  - "Report Number"
+  - "Local Case Number"
+  - "Agency Name"
+  - "Person ID"
+  - "Vehicle ID"
+  - "Location"
+  - "Off-Road Description"
+  - "Related Non-Motorist"
+  - "Non-Motorist Substance Abuse"
+  - "ACRS Report Type"

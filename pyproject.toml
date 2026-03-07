@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+requires-python = ">=3.10"
+name = "crash_kedro"
+readme = "README.md"
+dynamic = ["version"]
+authors = [
+    {name = "Artur Cichocki"},
+    {name = "Bartosz Pikutin"},
+    {name = "Wiktor Golba"},
+]
+dependencies = [
+    "ipython>=8.10",
+    "jupyterlab>=3.0",
+    "notebook",
+    "kedro[jupyter]~=1.2.0",
+    "kedro-datasets[pandas-csvdataset, pandas-parquetdataset]>=9.1",
+    "kedro-viz>=6.7.0",
+    "scikit-learn>=1.5",
+    "pandas>=2.0",
+    "numpy>=1.26",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+]
+
+[project.scripts]
+"crash-kedro" = "crash_kedro.__main__:main"
+
+[project.entry-points."kedro.hooks"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-cov>=3,<7",
+    "pytest-mock>=1.7.1,<2.0",
+    "pytest~=7.2",
+    "ruff~=0.12.0",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "crash_kedro.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.kedro]
+package_name = "crash_kedro"
+project_name = "crash_kedro"
+kedro_init_version = "1.2.0"
+tools = "['Linting', 'Testing', 'Custom Logging', 'Data Structure']"
+example_pipeline = "False"
+source_dir = "src"
+
+[tool.pytest.ini_options]
+addopts = """
+--cov-report term-missing \
+--cov src/crash_kedro -ra"""
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff]
+line-length = 88
+show-fixes = true
+
+[tool.ruff.lint]
+select = [
+    "F",   # Pyflakes
+    "W",   # pycodestyle
+    "E",   # pycodestyle
+    "I",   # isort
+    "UP",  # pyupgrade
+    "PL",  # Pylint
+    "T201", # Print Statement
+]
+ignore = ["E501"]
+
+[tool.kedro_telemetry]
+project_id = "a99fee577b97473f9989fa65847b5990"

@@ -1,0 +1,122 @@
+##########################
+# KEDRO PROJECT
+
+# ignore all local configuration
+conf/local/**
+!conf/local/.gitkeep
+
+# ignore potentially sensitive credentials files
+conf/**/*credentials*
+
+# ignore everything in the following folders
+data/**
+
+# except their sub-folders
+!data/**/
+
+# also keep all .gitkeep files
+!.gitkeep
+
+# keep the raw dataset
+!data/01_raw/crash_data.csv
+
+# ignore kedro-viz metadata
+.viz
+
+# ignore file based logs
+*.log
+
+##########################
+# Common files
+
+# IntelliJ
+.idea/
+*.iml
+out/
+.idea_modules/
+
+### macOS
+*.DS_Store
+.AppleDouble
+.LSOverride
+.Trashes
+
+# Vim
+*~
+.*.swo
+.*.swp
+
+# C extensions
+*.so
+
+### Python template
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Translations
+*.mo
+*.pot
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+
+# mlflow local runs
+mlruns/*
+
+# logs
+logs/
