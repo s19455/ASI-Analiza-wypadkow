@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - MODEL_PATH=/app/models/model.pkl
