@@ -1,0 +1,34 @@
+name: Continuous Training
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalacja zaleznosci
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+          pip install optuna xgboost lightgbm
+
+      - name: Run Kedro pipeline
+        run: kedro run
+
+      - name: Validate model
+        run: python scripts/validate_model.py
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-${{ github.run_number }}
+          path: data/06_models/model.pkl
