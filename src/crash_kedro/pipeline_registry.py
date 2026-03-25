@@ -29,4 +29,13 @@ def register_pipelines():
     except ImportError:
         pass
 
+    try:
+        from crash_kedro.pipelines.autogluon import (  # noqa: PLC0415
+            create_pipeline as autogluon,
+        )
+
+        pipelines["autogluon"] = dp() + autogluon()
+    except ImportError:
+        pass
+
     return pipelines

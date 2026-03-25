@@ -41,3 +41,11 @@ tuned_model:
 tuning_metrics:
   type: json.JSONDataset
   filepath: data/08_reporting/tuning_metrics.json
+
+autogluon_predictor:
+  type: pickle.PickleDataset
+  filepath: data/06_models/autogluon_predictor.pkl
+
+autogluon_metrics:
+  type: json.JSONDataset
+  filepath: data/08_reporting/autogluon_metrics.json
