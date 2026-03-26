@@ -38,4 +38,13 @@ def register_pipelines():
     except ImportError:
         pass
 
+    try:
+        from crash_kedro.pipelines.feature_selection import (  # noqa: PLC0415
+            create_pipeline as fs,
+        )
+
+        pipelines["feature_selection"] = dp() + fs()
+    except ImportError:
+        pass
+
     return pipelines

@@ -42,6 +42,22 @@ tuning_metrics:
   type: json.JSONDataset
   filepath: data/08_reporting/tuning_metrics.json
 
+grid_random_model:
+  type: pickle.PickleDataset
+  filepath: data/06_models/grid_random_model.pkl
+
+grid_random_metrics:
+  type: json.JSONDataset
+  filepath: data/08_reporting/grid_random_metrics.json
+
+selected_features:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/selected_features.parquet
+
+feature_selection_metrics:
+  type: json.JSONDataset
+  filepath: data/08_reporting/feature_selection_metrics.json
+
 autogluon_predictor:
   type: pickle.PickleDataset
   filepath: data/06_models/autogluon_predictor.pkl
