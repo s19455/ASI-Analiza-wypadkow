@@ -2,7 +2,7 @@
 
 from kedro.pipeline import Pipeline, node
 
-from .nodes import bayesian_tuning, compare_models
+from .nodes import bayesian_tuning, compare_models, grid_random_search
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -13,6 +13,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["crash_features", "parameters"],
                 outputs=["best_comparison_model", "comparison_metrics"],
                 name="compare_models_node",
+            ),
+            node(
+                func=grid_random_search,
+                inputs=["crash_features", "parameters"],
+                outputs=["grid_random_model", "grid_random_metrics"],
+                name="grid_random_search_node",
             ),
             node(
                 func=bayesian_tuning,
