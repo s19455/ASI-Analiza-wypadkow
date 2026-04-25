@@ -16,7 +16,8 @@ Dataset ma 172 tys. wierszy i 43 kolumny.
 
 | Model | Accuracy | F1 ważone | F1 makro |
 |-------|----------|-----------|----------|
-| **LightGBM (Optuna)** | 0.78 | **0.78** | **0.46** |
+| **LightGBM (Optuna, 50 prób)** | 0.79 | **0.78** | **0.47** |
+| Autogluon (best: LightGBM) | 0.83 | 0.77 | 0.40 |
 | XGBoost | 0.83 | 0.77 | 0.40 |
 | Gradient Boosting | 0.82 | 0.77 | 0.40 |
 | Random Forest (baseline) | 0.82 | 0.75 | 0.33 |
