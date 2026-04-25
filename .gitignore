@@ -1,4 +1,11 @@
 ##########################
+# notatki prywatne - nigdy do repo
+notatki/
+notatki_*.md
+omowienie_*.md
+_notatki*
+
+##########################
 # KEDRO PROJECT
 
 # ignore all local configuration
