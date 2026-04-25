@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 
 def run_autogluon(df: pd.DataFrame, parameters: dict):
     """Trenowanie modelu autogluon na danych - autostacking i auto-ensembling."""
-    from autogluon.tabular import TabularPredictor  # noqa: PLC0415
+    from autogluon.tabular import TabularPredictor
 
     train, test = train_test_split(
         df,
@@ -34,10 +34,10 @@ def run_autogluon(df: pd.DataFrame, parameters: dict):
     f1_w = f1_score(y_test, preds, average="weighted")
     f1_m = f1_score(y_test, preds, average="macro")
 
-    print("\n" + "=" * 60)  # noqa: T201
-    print("AUTOGLUON - wyniki na zbiorze testowym")  # noqa: T201
-    print("=" * 60)  # noqa: T201
-    print(classification_report(y_test, preds))  # noqa: T201
+    print("\n" + "=" * 60)
+    print("AUTOGLUON - wyniki na zbiorze testowym")
+    print("=" * 60)
+    print(classification_report(y_test, preds))
 
     leaderboard = predictor.leaderboard(test, silent=True)
 

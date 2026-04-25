@@ -26,9 +26,10 @@ def split_data(df: pd.DataFrame, parameters: dict):
 
 
 def train_model(X_train, y_train):
+    # baseline - prosty Random Forest, lepsze modele sa w pipeline tuning
     params = {
         "n_estimators": 100,
-        "class_weight": "balanced",
+        "class_weight": "balanced",  # bardzo wazne, dane sa mocno niezbalansowane
         "random_state": 42,
         "n_jobs": -1,
     }
@@ -37,8 +38,8 @@ def train_model(X_train, y_train):
 
     # Logowanie do MLflow
     try:
-        import mlflow  # noqa: PLC0415
-        import mlflow.sklearn  # noqa: PLC0415
+        import mlflow
+        import mlflow.sklearn
 
         mlflow.set_experiment("crash-severity-baseline")
         with mlflow.start_run(run_name="random_forest_baseline"):
@@ -46,7 +47,7 @@ def train_model(X_train, y_train):
             mlflow.log_param("model_type", "RandomForestClassifier")
             mlflow.sklearn.log_model(model, name="model")
     except Exception as e:
-        print(f"[MLflow] Pominieto logowanie: {e}")  # noqa: T201
+        print(f"[MLflow] Pominieto logowanie: {e}")
 
     return model
 
@@ -58,7 +59,7 @@ def evaluate_model(model, X_test, y_test):
     f1_macro = f1_score(y_test, preds, average="macro")
 
     report = classification_report(y_test, preds)
-    print(report)  # noqa: T201
+    print(report)
 
     metrics = {
         "accuracy": acc,
@@ -68,12 +69,12 @@ def evaluate_model(model, X_test, y_test):
 
     # Logowanie metryk do MLflow
     try:
-        import mlflow  # noqa: PLC0415
+        import mlflow
 
         mlflow.set_experiment("crash-severity-baseline")
         with mlflow.start_run(run_name="evaluation"):
             mlflow.log_metrics(metrics)
     except Exception as e:
-        print(f"[MLflow] Pominieto logowanie metryk: {e}")  # noqa: T201
+        print(f"[MLflow] Pominieto logowanie metryk: {e}")
 
     return metrics

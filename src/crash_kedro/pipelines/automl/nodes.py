@@ -51,7 +51,7 @@ def run_automl(df: pd.DataFrame, parameters: dict):
     all_results = {}
 
     for name, model in candidates.items():
-        print(f"\nTraining {name}...")  # noqa: T201
+        print(f"\nTraining {name}...")
         model.fit(X_train, y_train)
         preds = model.predict(X_test)
         acc = accuracy_score(y_test, preds)
@@ -59,16 +59,16 @@ def run_automl(df: pd.DataFrame, parameters: dict):
         f1_m = f1_score(y_test, preds, average="macro")
 
         all_results[name] = {"accuracy": acc, "f1_weighted": f1_w, "f1_macro": f1_m}
-        print(f"  F1 weighted: {f1_w:.4f}, F1 macro: {f1_m:.4f}")  # noqa: T201
+        print(f"  F1 weighted: {f1_w:.4f}, F1 macro: {f1_m:.4f}")
 
         if f1_w > best_score:
             best_score = f1_w
             best_model = model
             best_name = name
 
-    print(f"\n{'='*50}")  # noqa: T201
-    print(f"Best AutoML model: {best_name} (F1w={best_score:.4f})")  # noqa: T201
-    print(classification_report(y_test, best_model.predict(X_test)))  # noqa: T201
+    print(f"\n{'='*50}")
+    print(f"Best AutoML model: {best_name} (F1w={best_score:.4f})")
+    print(classification_report(y_test, best_model.predict(X_test)))
 
     metrics = {
         "automl_accuracy": all_results[best_name]["accuracy"],

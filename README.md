@@ -1,103 +1,77 @@
 # ASI - Analiza wypadków drogowych
 
-Projekt zaliczeniowy z ASI. Przewidywanie stopnia obrażeń w wypadkach drogowych (dane z Montgomery County, Maryland, 2015-2024).
+Projekt zaliczeniowy z ASI. Przewidywanie stopnia obrażeń w wypadkach drogowych na podstawie danych z Montgomery County, Maryland (2015-2024).
 
-## O czym jest projekt
+## Problem
 
-Na podstawie informacji o wypadku (pogoda, oświetlenie, prędkość, typ kolizji itd.) model przewiduje czy doszło do obrażeń i jak poważnych. Używamy 3 klas:
-- **NO_INJURY** (82%) - brak obrażeń
-- **MINOR** (17%) - drobne obrażenia
-- **SERIOUS** (1%) - poważne obrażenia / zgon
+Klasyfikacja - na podstawie informacji o wypadku (pogoda, prędkość, typ kolizji itp.) chcemy przewidzieć czy doszło do obrażeń i jak poważnych. 3 klasy:
 
-Dataset ma 172 tys. rekordów i 43 kolumny.
+- **NO_INJURY** (~82%) - brak obrażeń
+- **MINOR** (~17%) - drobne obrażenia
+- **SERIOUS** (~1%) - poważne obrażenia / zgon
 
-## Co zrobiliśmy
-
-1. **EDA + baseline** - eksploracja danych w notebooku, Random Forest jako model bazowy
-2. **Pipeline Kedro** - przetwarzanie danych i trening modelu jako pipeline (kedro run)
-3. **Selekcja cech** - SelectKBest z mutual_info_classif
-4. **Porównanie modeli** - RF, Gradient Boosting, XGBoost, LightGBM
-5. **Strojenie hiperparametrów** - Grid Search, Random Search i Optuna (Bayesian)
-6. **AutoML** - Autogluon (auto-stacking, auto-ensembling)
-7. **MLflow** - śledzenie eksperymentów (parametry, metryki, modele)
-8. **API** - FastAPI z `/predict` (real-time) i `/predict_batch` (batch)
-9. **Docker** - konteneryzacja API
-10. **CI/CD** - GitHub Actions (lint, testy, budowanie dockera, continuous training)
-11. **Monitoring** - logowanie predykcji, latency stats, wykrywanie driftu (Evidently)
+Dataset ma 172 tys. wierszy i 43 kolumny.
 
 ## Wyniki
 
-| Model | Dokładność | F1 ważone | F1 makro |
-|-------|-----------|-----------|----------|
-| **Optuna LightGBM** | 0.78 | **0.78** | **0.46** |
+| Model | Accuracy | F1 ważone | F1 makro |
+|-------|----------|-----------|----------|
+| **LightGBM (Optuna)** | 0.78 | **0.78** | **0.46** |
 | XGBoost | 0.83 | 0.77 | 0.40 |
 | Gradient Boosting | 0.82 | 0.77 | 0.40 |
-| Random Forest | 0.82 | 0.75 | 0.33 |
+| Random Forest (baseline) | 0.82 | 0.75 | 0.33 |
 
-Najlepszy model to LightGBM po tuningu Optuną. F1 makro wzrosło z 0.33 do 0.46 w porównaniu z baseline.
+Dane są mocno niezbalansowane (klasa SERIOUS to ~1%), więc patrzymy głównie na F1 makro.
 
-## Jak uruchomić
+## Co jest w projekcie
+
+- Pipeline Kedro - preprocessing + trening (`kedro run`)
+- Selekcja cech (SelectKBest)
+- Strojenie hiperparametrów (Grid Search, Random Search, Optuna)
+- AutoML (Autogluon)
+- Śledzenie eksperymentów (MLflow)
+- API FastAPI + Docker
+- CI/CD na GitHub Actions
+- Monitoring driftu (Evidently)
+
+## Uruchomienie
 
 ```bash
-# instalacja
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
 
-# pipeline
-kedro run                                  # cały pipeline (preprocessing + trening)
-kedro run --pipeline=feature_selection     # selekcja cech (SelectKBest)
-kedro run --pipeline=tuning                # Grid + Random + Bayesian Search
-kedro run --pipeline=autogluon             # AutoML z Autogluonem
+kedro run                              # cały pipeline
+kedro run --pipeline=tuning            # tuning hiperparametrów
+kedro run --pipeline=feature_selection # selekcja cech
+kedro run --pipeline=autogluon         # AutoML
 
-# mlflow ui
-mlflow ui
-# http://localhost:5000
+mlflow ui                              # przeglądanie eksperymentów
 
-# api
-uvicorn src.crash_kedro.api.app:app --reload
-# http://localhost:8000/docs
+uvicorn src.crash_kedro.api.app:app    # API (Swagger pod /docs)
 
-# docker
-docker-compose up --build
+docker-compose up --build              # API w Dockerze
 
-# demo
-python scripts/demo.py
+python scripts/demo.py                 # demo z predykcjami
 ```
 
 ## Struktura
 
 ```
-├── conf/                    # konfiguracja kedro
-├── data/01_raw/             # surowe dane (crash_data.csv)
-├── src/crash_kedro/
-│   ├── pipelines/           # data_preparation, data_modeling, automl, tuning
-│   ├── api/                 # FastAPI
-│   └── monitoring/          # wykrywanie driftu
-├── notebooks/               # EDA, porównanie modeli
-├── docs/                    # dokumentacja, diagram
-├── .github/workflows/       # CI/CD
-├── Dockerfile
-└── scripts/                 # demo, walidacja modelu
+conf/                  # konfiguracja Kedro (catalog, parameters)
+data/                  # dane + modele + raporty (konwencja Kedro)
+src/crash_kedro/
+    pipelines/         # data_preparation, data_modeling, automl,
+                       # tuning, autogluon, feature_selection
+    api/               # FastAPI
+    monitoring/        # drift detection
+notebooks/             # 01_baseline (EDA + RF), 02_model_comparison
+docs/                  # diagram, słownik danych, prezentacja
+scripts/               # demo, walidacja modelu
+.github/workflows/     # CI/CD
+models/                # README - modele zapisywane w data/06_models/
 ```
-
-## Optymalizacja produkcji
-
-Wybralismy **architekturę real-time** z opcjonalnym batch endpointem:
-
-- `/predict` — pojedyncza predykcja (real-time, ~10-50ms latency)
-- `/predict_batch` — wiele predykcji w jednym requeście (efektywniejsze przy duzych wolumenach)
-- `/predictions/stats` — statystyki latency: avg, p50, p95, p99, max
-
-Latency mierzymy przy każdej predykcji i logujemy do `logs/predictions.jsonl`.
-Model w pamieci (cache w `_model_cache`) - wczytywany tylko raz przy starcie.
-
-Mozliwe przyszle optymalizacje: ONNX export, kwantyzacja, async batching.
-
-## Technologie
-
-Kedro, scikit-learn, XGBoost, LightGBM, Optuna, Autogluon, MLflow, FastAPI, Docker, GitHub Actions, Evidently
 
 ## Autorzy
 
@@ -105,4 +79,4 @@ Kedro, scikit-learn, XGBoost, LightGBM, Optuna, Autogluon, MLflow, FastAPI, Dock
 - Bartosz Pikutin
 - Wiktor Golba
 
-Projekt na zaliczenie z ASI, PJATK.
+PJATK, ASI 2026.

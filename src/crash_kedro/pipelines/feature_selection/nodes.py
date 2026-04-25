@@ -22,10 +22,10 @@ def select_features(df: pd.DataFrame, parameters: dict):
     scores = dict(zip(X.columns, selector.scores_, strict=False))
     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
-    print(f"\nWybranych cech: {len(selected_cols)} / {X.shape[1]}")  # noqa: T201
-    print("\nTop 10 cech wedlug informacji wzajemnej:")  # noqa: T201
+    print(f"\nWybranych cech: {len(selected_cols)} / {X.shape[1]}")
+    print("\nTop 10 cech wedlug informacji wzajemnej:")
     for feat, score in sorted_scores[:10]:
-        print(f"  {feat:35s} = {score:.4f}")  # noqa: T201
+        print(f"  {feat:35s} = {score:.4f}")
 
     # Trening Random Forest na pelnych vs. zredukowanych cechach
     X_train, X_test, y_train, y_test = train_test_split(
@@ -51,13 +51,13 @@ def select_features(df: pd.DataFrame, parameters: dict):
     sel_f1 = f1_score(y_test, sel_preds, average="weighted")
     sel_acc = accuracy_score(y_test, sel_preds)
 
-    print("\n=== Porownanie cech ===")  # noqa: T201
-    print(f"Pelne {X.shape[1]} cech : F1w = {full_f1:.4f}, acc = {full_acc:.4f}")  # noqa: T201
-    print(f"Zredukowane {k} cech : F1w = {sel_f1:.4f}, acc = {sel_acc:.4f}")  # noqa: T201
+    print("\n=== Porownanie cech ===")
+    print(f"Pelne {X.shape[1]} cech : F1w = {full_f1:.4f}, acc = {full_acc:.4f}")
+    print(f"Zredukowane {k} cech : F1w = {sel_f1:.4f}, acc = {sel_acc:.4f}")
 
     # Logowanie do MLflow
     try:
-        import mlflow  # noqa: PLC0415
+        import mlflow
 
         mlflow.set_experiment("crash-severity-feature-selection")
         with mlflow.start_run(run_name="select_kbest_mutual_info"):
@@ -69,7 +69,7 @@ def select_features(df: pd.DataFrame, parameters: dict):
                 "selected_accuracy": sel_acc,
             })
     except Exception as e:
-        print(f"[MLflow] Pominieto: {e}")  # noqa: T201
+        print(f"[MLflow] Pominieto: {e}")
 
     selected_df = df[selected_cols + ["Severity_Group"]].copy()
 

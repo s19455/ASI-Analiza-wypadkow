@@ -78,10 +78,8 @@ select = [
     "E",   # pycodestyle
     "I",   # isort
     "UP",  # pyupgrade
-    "PL",  # Pylint
-    "T201", # Print Statement
 ]
-ignore = ["E501"]
+ignore = ["E501", "PLC0415", "PLR2004"]
 
 [tool.kedro_telemetry]
 project_id = "a99fee577b97473f9989fa65847b5990"

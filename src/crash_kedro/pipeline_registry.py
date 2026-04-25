@@ -12,7 +12,7 @@ def register_pipelines():
     }
 
     try:
-        from crash_kedro.pipelines.automl import (  # noqa: PLC0415
+        from crash_kedro.pipelines.automl import (
             create_pipeline as automl,
         )
 
@@ -21,7 +21,7 @@ def register_pipelines():
         pass
 
     try:
-        from crash_kedro.pipelines.hyperparameter_tuning import (  # noqa: PLC0415
+        from crash_kedro.pipelines.hyperparameter_tuning import (
             create_pipeline as tuning,
         )
 
@@ -30,7 +30,7 @@ def register_pipelines():
         pass
 
     try:
-        from crash_kedro.pipelines.autogluon import (  # noqa: PLC0415
+        from crash_kedro.pipelines.autogluon import (
             create_pipeline as autogluon,
         )
 
@@ -39,7 +39,7 @@ def register_pipelines():
         pass
 
     try:
-        from crash_kedro.pipelines.feature_selection import (  # noqa: PLC0415
+        from crash_kedro.pipelines.feature_selection import (
             create_pipeline as fs,
         )
 

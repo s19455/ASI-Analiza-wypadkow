@@ -5,8 +5,8 @@ import pandas as pd
 
 def detect_drift(reference_data: pd.DataFrame, current_data: pd.DataFrame) -> dict:
     try:
-        from evidently.metric_preset import DataDriftPreset  # noqa: PLC0415
-        from evidently.report import Report  # noqa: PLC0415
+        from evidently.metric_preset import DataDriftPreset
+        from evidently.report import Report
 
         report = Report(metrics=[DataDriftPreset()])
         report.run(reference_data=reference_data, current_data=current_data)

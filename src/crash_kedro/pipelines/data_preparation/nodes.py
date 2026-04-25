@@ -14,6 +14,7 @@ def drop_unnecessary_columns(df: pd.DataFrame, parameters: dict) -> pd.DataFrame
 
 
 def clean_missing_values(df: pd.DataFrame) -> pd.DataFrame:
+    # TODO: pomyslec o lepszej imputacji - moze KNN imputer
     for col in df.select_dtypes(include=["object"]).columns:
         df[col] = df[col].fillna(df[col].mode()[0] if not df[col].mode().empty else "UNKNOWN")
 
@@ -65,12 +66,13 @@ def map_target(df: pd.DataFrame, parameters: dict) -> pd.DataFrame:
 
 
 def encode_features(df: pd.DataFrame) -> pd.DataFrame:
-    label_encoders = {}
+    # uzywamy label encoding zamiast one-hot bo niektore kolumny maja
+    # bardzo duzo unikatowych wartosci (Vehicle Make, Road Name itd.)
     for col in df.select_dtypes(include=["object"]).columns:
         if col == "Severity_Group":
             continue
         le = LabelEncoder()
         df[col] = le.fit_transform(df[col].astype(str))
-        label_encoders[col] = le
+        # print(f"encoded {col}: {len(le.classes_)} unikalnych")
 
     return df

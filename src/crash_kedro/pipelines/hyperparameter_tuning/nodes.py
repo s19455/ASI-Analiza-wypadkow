@@ -18,7 +18,7 @@ from xgboost import XGBClassifier
 def _log_to_mlflow(experiment, run_name, params, metrics):
     """Helper - logowanie do MLflow z obsluga bledow."""
     try:
-        import mlflow  # noqa: PLC0415
+        import mlflow
 
         mlflow.set_experiment(experiment)
         with mlflow.start_run(run_name=run_name):
@@ -27,7 +27,7 @@ def _log_to_mlflow(experiment, run_name, params, metrics):
             if metrics:
                 mlflow.log_metrics(metrics)
     except Exception as e:
-        print(f"[MLflow] Pominieto: {e}")  # noqa: T201
+        print(f"[MLflow] Pominieto: {e}")
 
 
 def compare_models(df: pd.DataFrame, parameters: dict):
@@ -75,10 +75,10 @@ def compare_models(df: pd.DataFrame, parameters: dict):
         f1_m = f1_score(y_test, preds, average="macro")
 
         results[name] = {"accuracy": acc, "f1_weighted": f1_w, "f1_macro": f1_m}
-        print(f"\n{'='*50}")  # noqa: T201
-        print(f"{name}")  # noqa: T201
-        print(f"{'='*50}")  # noqa: T201
-        print(classification_report(y_test, preds))  # noqa: T201
+        print(f"\n{'='*50}")
+        print(f"{name}")
+        print(f"{'='*50}")
+        print(classification_report(y_test, preds))
 
         _log_to_mlflow(
             "crash-severity-comparison",
@@ -92,7 +92,7 @@ def compare_models(df: pd.DataFrame, parameters: dict):
             best_model = model
             best_name = name
 
-    print(f"\nBest model: {best_name} (F1 weighted: {best_score:.4f})")  # noqa: T201
+    print(f"\nBest model: {best_name} (F1 weighted: {best_score:.4f})")
     results["best_model_name"] = best_name
 
     return best_model, results
@@ -111,6 +111,7 @@ def grid_random_search(df: pd.DataFrame, parameters: dict):
     )
 
     # Grid Search - maly grid (3*3 = 9 kombinacji)
+    # FIXME: gdyby bylo wiecej czasu - rozszerzyc grid o min_samples_split itd.
     grid_params = {
         "n_estimators": [100, 200, 300],
         "max_depth": [10, 20, None],
@@ -129,8 +130,8 @@ def grid_random_search(df: pd.DataFrame, parameters: dict):
         "grid_f1_macro": f1_score(y_test, grid_preds, average="macro"),
         "grid_accuracy": accuracy_score(y_test, grid_preds),
     }
-    print(f"\n[Grid Search] Best params: {grid.best_params_}")  # noqa: T201
-    print(f"[Grid Search] F1 ważone: {grid_metrics['grid_f1_weighted']:.4f}")  # noqa: T201
+    print(f"\n[Grid Search] Best params: {grid.best_params_}")
+    print(f"[Grid Search] F1 ważone: {grid_metrics['grid_f1_weighted']:.4f}")
 
     _log_to_mlflow(
         "crash-severity-tuning",
@@ -162,8 +163,8 @@ def grid_random_search(df: pd.DataFrame, parameters: dict):
         "random_f1_macro": f1_score(y_test, rs_preds, average="macro"),
         "random_accuracy": accuracy_score(y_test, rs_preds),
     }
-    print(f"\n[Random Search] Best params: {random_search.best_params_}")  # noqa: T201
-    print(f"[Random Search] F1 ważone: {rs_metrics['random_f1_weighted']:.4f}")  # noqa: T201
+    print(f"\n[Random Search] Best params: {random_search.best_params_}")
+    print(f"[Random Search] F1 ważone: {rs_metrics['random_f1_weighted']:.4f}")
 
     _log_to_mlflow(
         "crash-severity-tuning",
@@ -222,10 +223,11 @@ def bayesian_tuning(df: pd.DataFrame, parameters: dict):
         return score.mean()
 
     study = optuna.create_study(direction="maximize")
+    # 50 prob - kompromis miedzy czasem a jakoscia
     study.optimize(objective, n_trials=50, show_progress_bar=True)
 
-    print(f"\nBest trial F1 weighted: {study.best_value:.4f}")  # noqa: T201
-    print(f"Best params: {study.best_params}")  # noqa: T201
+    print(f"\nBest trial F1 weighted: {study.best_value:.4f}")
+    print(f"Best params: {study.best_params}")
 
     best_model = LGBMClassifier(
         **study.best_params, random_state=42, n_jobs=-1,
@@ -238,8 +240,8 @@ def bayesian_tuning(df: pd.DataFrame, parameters: dict):
     f1_w = f1_score(y_test, preds, average="weighted")
     f1_m = f1_score(y_test, preds, average="macro")
 
-    print("\nOptuna-tuned LightGBM:")  # noqa: T201
-    print(classification_report(y_test, preds))  # noqa: T201
+    print("\nOptuna-tuned LightGBM:")
+    print(classification_report(y_test, preds))
 
     metrics = {
         "optuna_accuracy": acc,

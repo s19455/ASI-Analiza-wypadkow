@@ -26,7 +26,7 @@ jobs:
           pip install optuna xgboost lightgbm
 
       - name: Lint (ruff)
-        run: ruff check src/ --ignore T201
+        run: ruff check src/
 
       - name: Testy (pytest)
         run: pytest tests/ -v
