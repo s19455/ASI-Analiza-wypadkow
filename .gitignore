@@ -5,6 +5,9 @@ notatki_*.md
 omowienie_*.md
 _notatki*
 
+# docs - na razie nie pokazujemy
+docs/
+
 ##########################
 # KEDRO PROJECT
 
