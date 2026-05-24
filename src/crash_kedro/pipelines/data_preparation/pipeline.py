@@ -43,7 +43,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=encode_features,
                 inputs="target_mapped",
-                outputs="crash_features",
+                outputs=["crash_features", "crash_encoders"],
                 name="encode_features_node",
             ),
         ]

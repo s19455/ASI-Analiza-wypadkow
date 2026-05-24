@@ -3,7 +3,11 @@
 import pandas as pd
 
 
-def detect_drift(reference_data: pd.DataFrame, current_data: pd.DataFrame) -> dict:
+def detect_drift(
+    reference_data: pd.DataFrame,
+    current_data: pd.DataFrame,
+    report_path: str = "data/08_reporting/drift_report.html",
+) -> dict:
     try:
         # nowsze evidently (0.5+) ma legacy API pod evidently.legacy.*
         try:
@@ -15,13 +19,13 @@ def detect_drift(reference_data: pd.DataFrame, current_data: pd.DataFrame) -> di
 
         report = Report(metrics=[DataDriftPreset()])
         report.run(reference_data=reference_data, current_data=current_data)
-        report.save_html("data/08_reporting/drift_report.html")
+        report.save_html(report_path)
 
         result = report.as_dict()
         return {
             "drift_detected": result["metrics"][0]["result"]["dataset_drift"],
             "drift_share": result["metrics"][0]["result"]["drift_share"],
-            "report_path": "data/08_reporting/drift_report.html",
+            "report_path": report_path,
         }
     except ImportError:
         return {

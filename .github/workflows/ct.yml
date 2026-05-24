@@ -18,14 +18,25 @@ jobs:
       - name: Instalacja zaleznosci
         run: |
           pip install --upgrade pip
-          pip install -e .
-          pip install optuna xgboost lightgbm
+          pip install -r requirements.txt
+          pip install -e ".[dev]"
 
       - name: Run Kedro pipeline
         run: kedro run
 
+      - name: Run drift monitoring
+        run: python scripts/run_drift_monitoring.py
+
       - name: Validate model
         run: python scripts/validate_model.py
+
+      - name: Upload drift artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report-${{ github.run_number }}
+          path: |
+            data/08_reporting/drift_report.html
+            data/08_reporting/drift_summary.json
 
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
