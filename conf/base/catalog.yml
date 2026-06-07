@@ -2,6 +2,10 @@ crash_raw:
   type: pandas.CSVDataset
   filepath: data/01_raw/crash_data.csv
 
+crash_encoders:
+  type: pickle.PickleDataset
+  filepath: data/06_models/encoders.pkl
+
 crash_cleaned:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/crash_cleaned.parquet

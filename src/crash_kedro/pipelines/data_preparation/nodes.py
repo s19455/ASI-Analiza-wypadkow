@@ -2,8 +2,13 @@
 Pipeline przygotowania danych - czyszczenie, inzynieria cech, enkodowanie.
 """
 
+import logging
+
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+
+from crash_kedro.utils.encoders import fit_encoders, transform_with_encoders
+
+logger = logging.getLogger(__name__)
 
 
 def drop_unnecessary_columns(df: pd.DataFrame, parameters: dict) -> pd.DataFrame:
@@ -65,14 +70,64 @@ def map_target(df: pd.DataFrame, parameters: dict) -> pd.DataFrame:
     return df
 
 
-def encode_features(df: pd.DataFrame) -> pd.DataFrame:
-    # uzywamy label encoding zamiast one-hot bo niektore kolumny maja
-    # bardzo duzo unikatowych wartosci (Vehicle Make, Road Name itd.)
-    for col in df.select_dtypes(include=["object"]).columns:
-        if col == "Severity_Group":
-            continue
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col].astype(str))
-        # print(f"encoded {col}: {len(le.classes_)} unikalnych")
+def encode_features(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Encode categorical features in the DataFrame.
 
-    return df
+    This function fits label encoders on all text columns (dtype='object')
+    except for the target column 'Severity_Group' and other critical columns,
+    then applies the encoders to the DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame with categorical and numerical columns.
+        The 'Severity_Group' column is preserved as-is and not encoded.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, dict]
+        A tuple containing:
+        - df_encoded: DataFrame with categorical features encoded to integers.
+        - encoders_dict: Dictionary mapping column names to encoder dictionaries
+          (mapping of original category values to integer codes).
+
+    Raises
+    ------
+    ValueError
+        If df is not a pandas DataFrame or if encoding fails.
+
+    Notes
+    -----
+    Unknown categories encountered during transformation are coded as -1.
+    The encoders can be saved to disk and reused for inference.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'Weather': ['CLEAR', 'CLOUDY', 'RAIN'],
+    ...     'Severity_Group': ['NO_INJURY', 'INJURY', 'FATALITY']
+    ... })
+    >>> encoded_df, encoders = encode_features(df)
+    >>> isinstance(encoded_df, pd.DataFrame)
+    True
+    >>> isinstance(encoders, dict)
+    True
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError("Expected a pandas DataFrame.")
+
+    # Fit encoders on all object columns except Severity_Group
+    ignore_cols = ["Severity_Group"]
+    encoders_dict = fit_encoders(df, ignore_columns=ignore_cols)
+
+    # Transform the DataFrame using fitted encoders
+    df_encoded = transform_with_encoders(df, encoders_dict)
+
+    # Log encoding details
+    logger.info(
+        "Encoded %d categorical columns. %s",
+        len(encoders_dict),
+        ", ".join(encoders_dict.keys()) if encoders_dict else "none",
+    )
+
+    return df_encoded, encoders_dict

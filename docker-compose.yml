@@ -1,10 +1,11 @@
 version: "3.8"
 services:
   api:
+    image: ${IMAGE_REF:-crash-prediction-api:latest}
     build: .
     ports:
       - "8000:8000"
     volumes:
       - ./logs:/app/logs
     environment:
-      - MODEL_PATH=/app/models/model.pkl
+      - MODEL_PATH=/app/data/06_models/model.pkl
