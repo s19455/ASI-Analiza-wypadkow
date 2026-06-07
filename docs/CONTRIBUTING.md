@@ -15,7 +15,7 @@ python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
 ```
 
-### 3. Instalacja dev dependenciesypi
+### 3. Instalacja dev dependencies
 ```bash
 pip install --upgrade pip
 pip install -e ".[dev]"
@@ -425,7 +425,7 @@ git checkout -b feat/new origin/main
 ### Dokumentacja
 - [ ] Docstrings są jasne
 - [ ] Type hints są prawidłowe
-- [ ] Brak zastarzeałych komentarzy
+- [ ] Brak zastarzałych komentarzy
 
 ### Style
 - [ ] Zgodne z PEP8 / project style

@@ -56,9 +56,9 @@ Ten dokument opisuje wszystkie zmienne w zbiorze danych o wypadkach drogowych z 
 | Vehicle Movement | string | Typ ruchu pojazdu | MOVING CONSTANT, STOPPED, ... |
 | Equipment Problems | string | Problemy techniczne | None, BRAKE FAILURE, ... |
 
-### Wektysja i obrażenia
+### Target i obrażenia
 
-| Kolumna | Tip | Opis | Przykłady |
+| Kolumna | Typ | Opis | Przykłady |
 |---------|-----|------|----------|
 | **Injury Severity** (TARGET) | string | Poziom obrażeń | NO APPARENT INJURY, POSSIBLE INJURY, SUSPECTED MINOR INJURY, SUSPECTED SERIOUS INJURY, FATAL INJURY |
 | Non-Motorist | string | Typ pieszego/rowerzysty | None, ADULT PEDESTRIAN, PEDALCYCLIST |

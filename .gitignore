@@ -8,6 +8,9 @@ _notatki*
 # docs - na razie nie pokazujemy
 docs/
 
+# pdf z wymaganiami - trzymamy lokalnie, poza repo
+wymagania.pdf
+
 ##########################
 # KEDRO PROJECT
 
@@ -127,6 +130,7 @@ venv.bak/
 
 # mlflow local runs
 mlruns/*
+mlflow.db
 
 # logs
 logs/

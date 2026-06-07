@@ -128,10 +128,9 @@ W aplikacji można uzupełnić dane wypadku, a następnie otrzymać:
 
 **Pełne instrukcje:** [docs/SETUP.md](docs/SETUP.md)
 
-> Uwaga: na Pythonie 3.13 część ciężkich pakietów treningowych (`scikit-learn`, `xgboost`,
-> `lightgbm`, `tpot`, `autogluon.tabular`) jest pomijana przez znaczniki środowiskowe.
-> Do samego backendu + Streamlit wystarczy `requirements-api.txt`, a pełny zestaw ML
-> najlepiej instalować na Pythonie 3.10–3.12.
+> Uwaga: projekt testowaliśmy na Pythonie 3.13 z Kedro 1.2.0 - cały zestaw ML
+> (`scikit-learn`, `xgboost`, `lightgbm`, `tpot`, `autogluon.tabular`) działa.
+> Do samego backendu + Streamlit wystarczy `requirements-api.txt`.
 
 API szuka modelu najpierw w `MODEL_PATH`, a następnie w katalogu `data/06_models/`
 (np. `model.pkl`, `tuned_model.pkl`, `best_comparison_model.pkl`, `grid_random_model.pkl`).
@@ -254,8 +253,8 @@ tests/                 # Unit + integration testy
 
 ## Autorzy
 
-- Artur Cichocki, 
-- Batrosz Pikutin, 
+- Artur Cichocki
+- Bartosz Pikutin
 - Wiktor Golba
 
 PJATK, ASI 2026.

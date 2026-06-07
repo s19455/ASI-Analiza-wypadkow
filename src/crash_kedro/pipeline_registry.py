@@ -1,7 +1,11 @@
 """Project pipelines."""
 
+import logging
+
 from crash_kedro.pipelines.data_modeling import create_pipeline as mp
 from crash_kedro.pipelines.data_preparation import create_pipeline as dp
+
+logger = logging.getLogger(__name__)
 
 
 def register_pipelines():
@@ -18,7 +22,8 @@ def register_pipelines():
 
         pipelines["automl"] = dp() + automl()
     except ImportError:
-        pass
+        # biblioteki ML moga byc pominiete (np. na Pythonie 3.13) - pipeline nie bedzie dostepny
+        logger.warning("Pipeline 'automl' pominiety - brakuje zaleznosci ML.")
 
     try:
         from crash_kedro.pipelines.hyperparameter_tuning import (
@@ -27,7 +32,7 @@ def register_pipelines():
 
         pipelines["tuning"] = dp() + tuning()
     except ImportError:
-        pass
+        logger.warning("Pipeline 'tuning' pominiety - brakuje zaleznosci ML.")
 
     try:
         from crash_kedro.pipelines.autogluon import (
@@ -36,7 +41,7 @@ def register_pipelines():
 
         pipelines["autogluon"] = dp() + autogluon()
     except ImportError:
-        pass
+        logger.warning("Pipeline 'autogluon' pominiety - brakuje zaleznosci ML.")
 
     try:
         from crash_kedro.pipelines.feature_selection import (
@@ -45,6 +50,6 @@ def register_pipelines():
 
         pipelines["feature_selection"] = dp() + fs()
     except ImportError:
-        pass
+        logger.warning("Pipeline 'feature_selection' pominiety - brakuje zaleznosci ML.")
 
     return pipelines
