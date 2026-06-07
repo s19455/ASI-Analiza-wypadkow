@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   api:
     image: ${IMAGE_REF:-crash-prediction-api:latest}
