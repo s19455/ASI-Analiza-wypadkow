@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import datetime as dt
 import os
+import pickle
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -44,9 +46,60 @@ MONTH_NAMES = {
     12: "Grudzień",
 }
 
+# pola formularza (selectbox) -> nazwy kolumn z modelu/enkoderow
+CATEGORY_COLUMNS = {
+    "weather": "Weather",
+    "light": "Light",
+    "collision_type": "Collision Type",
+    "surface_condition": "Surface Condition",
+    "traffic_control": "Traffic Control",
+    "driver_substance_abuse": "Driver Substance Abuse",
+    "driver_distracted_by": "Driver Distracted By",
+    "vehicle_body_type": "Vehicle Body Type",
+    "vehicle_damage_extent": "Vehicle Damage Extent",
+    "vehicle_movement": "Vehicle Movement",
+}
 
-def _render_text_input(streamlit: Any, label: str, default: str, help_text: str) -> str:
-    return streamlit.text_input(label, value=default, help=help_text)
+ENCODERS_PATH = Path(__file__).resolve().parents[3] / "data" / "06_models" / "encoders.pkl"
+
+
+def load_category_options(encoders_path: Path = ENCODERS_PATH) -> dict[str, list[str]]:
+    """Read possible category values for each form field from the encoders file.
+
+    Returns an empty dict if the file is missing - the form then falls back to
+    just the default value for each field.
+    """
+
+    try:
+        with open(encoders_path, "rb") as stream:
+            encoders = pickle.load(stream)
+    except (OSError, pickle.PickleError):
+        return {}
+
+    if not isinstance(encoders, dict):
+        return {}
+
+    options: dict[str, list[str]] = {}
+    for field_name, column_name in CATEGORY_COLUMNS.items():
+        values = encoders.get(column_name)
+        if isinstance(values, dict) and values:
+            options[field_name] = sorted(str(key) for key in values)
+    return options
+
+
+def _render_select(
+    streamlit: Any,
+    label: str,
+    options: list[str],
+    default: str,
+    help_text: str,
+) -> str:
+    """Render a selectbox, making sure the default value is always selectable."""
+
+    choices = list(options)
+    if default not in choices:
+        choices = [default, *choices]
+    return streamlit.selectbox(label, choices, index=choices.index(default), help=help_text)
 
 
 def _render_binary_choice(streamlit: Any, label: str, default: str) -> str:
@@ -54,75 +107,89 @@ def _render_binary_choice(streamlit: Any, label: str, default: str) -> str:
     return streamlit.selectbox(label, options, index=0 if default == "Yes" else 1)
 
 
-def _render_form(streamlit: Any, defaults: Mapping[str, Any]) -> dict[str, Any]:
+def _render_form(
+    streamlit: Any,
+    defaults: Mapping[str, Any],
+    options: Mapping[str, list[str]],
+) -> dict[str, Any]:
     current_year = dt.datetime.now().year
     with streamlit.form("crash_severity_form"):
         left_column, right_column = streamlit.columns(2)
 
         with left_column:
-            streamlit.subheader("Warunki zdarzenia")
-            weather = _render_text_input(
+            streamlit.subheader("🌧️ Warunki zdarzenia")
+            weather = _render_select(
                 streamlit,
                 "Pogoda",
+                options.get("weather", []),
                 str(defaults["weather"]),
-                "Przykłady: CLEAR, RAIN, CLOUDY, FOG.",
+                "Warunki pogodowe w chwili zdarzenia.",
             )
-            light = _render_text_input(
+            light = _render_select(
                 streamlit,
                 "Warunki oświetlenia",
+                options.get("light", []),
                 str(defaults["light"]),
-                "Przykłady: DAYLIGHT, DARK, DUSK, DAWN.",
+                "Pora dnia / oświetlenie drogi.",
             )
-            collision_type = _render_text_input(
+            collision_type = _render_select(
                 streamlit,
                 "Typ kolizji",
+                options.get("collision_type", []),
                 str(defaults["collision_type"]),
-                "Przykłady: SAME DIR REAR END, HEAD ON, ANGLE.",
+                "Rodzaj zderzenia pojazdów.",
             )
-            surface_condition = _render_text_input(
+            surface_condition = _render_select(
                 streamlit,
                 "Stan nawierzchni",
+                options.get("surface_condition", []),
                 str(defaults["surface_condition"]),
-                "Przykłady: DRY, WET, SNOW, ICE.",
+                "Stan nawierzchni drogi.",
             )
-            traffic_control = _render_text_input(
+            traffic_control = _render_select(
                 streamlit,
                 "Kontrola ruchu",
+                options.get("traffic_control", []),
                 str(defaults["traffic_control"]),
-                "Przykłady: NO CONTROLS, TRAFFIC SIGNAL, STOP SIGN.",
+                "Rodzaj sygnalizacji / oznakowania.",
             )
-            driver_substance_abuse = _render_text_input(
+            driver_substance_abuse = _render_select(
                 streamlit,
                 "Użycie substancji przez kierowcę",
+                options.get("driver_substance_abuse", []),
                 str(defaults["driver_substance_abuse"]),
-                "Przykłady: NONE DETECTED, ALCOHOL, DRUGS.",
+                "Czy wykryto substancje u kierowcy.",
             )
-            driver_distracted_by = _render_text_input(
+            driver_distracted_by = _render_select(
                 streamlit,
                 "Rozproszenie kierowcy",
+                options.get("driver_distracted_by", []),
                 str(defaults["driver_distracted_by"]),
-                "Przykłady: NOT DISTRACTED, CELL PHONE, PASSENGER.",
+                "Co rozpraszało kierowcę.",
             )
 
         with right_column:
-            streamlit.subheader("Pojazd i czas")
-            vehicle_body_type = _render_text_input(
+            streamlit.subheader("🚗 Pojazd i czas")
+            vehicle_body_type = _render_select(
                 streamlit,
                 "Typ pojazdu",
+                options.get("vehicle_body_type", []),
                 str(defaults["vehicle_body_type"]),
-                "Przykłady: PASSENGER CAR, SUV, TRUCK, MOTORCYCLE.",
+                "Rodzaj nadwozia pojazdu.",
             )
-            vehicle_damage_extent = _render_text_input(
+            vehicle_damage_extent = _render_select(
                 streamlit,
                 "Zakres uszkodzeń pojazdu",
+                options.get("vehicle_damage_extent", []),
                 str(defaults["vehicle_damage_extent"]),
-                "Przykłady: FUNCTIONAL, DISABLING, MINIMAL.",
+                "Jak bardzo pojazd został uszkodzony.",
             )
-            vehicle_movement = _render_text_input(
+            vehicle_movement = _render_select(
                 streamlit,
                 "Ruch pojazdu",
+                options.get("vehicle_movement", []),
                 str(defaults["vehicle_movement"]),
-                "Przykłady: MOVING CONSTANT, STOPPED IN TRAFFIC, LEFT TURN.",
+                "Co robił pojazd w chwili zdarzenia.",
             )
             speed_limit = streamlit.number_input(
                 "Ograniczenie prędkości",
@@ -182,7 +249,7 @@ def _render_form(streamlit: Any, defaults: Mapping[str, Any]) -> dict[str, Any]:
                 step=1,
             )
 
-        submitted = streamlit.form_submit_button("Oblicz prawdopodobieństwo obrażeń")
+        submitted = streamlit.form_submit_button("🔮 Oblicz prawdopodobieństwo obrażeń")
 
     return {
         "submitted": submitted,
@@ -210,6 +277,17 @@ def _render_form(streamlit: Any, defaults: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _render_class_legend(streamlit: Any) -> None:
+    """Show a short legend describing the three severity classes."""
+
+    streamlit.markdown(
+        "**Klasy obrażeń:** "
+        "🟢 `NO_INJURY` - brak obrażeń &nbsp;|&nbsp; "
+        "🟡 `MINOR` - drobne obrażenia &nbsp;|&nbsp; "
+        "🔴 `SERIOUS` - poważne obrażenia / zgon"
+    )
+
+
 def main() -> None:
     """Run the Streamlit application."""
 
@@ -225,8 +303,16 @@ def main() -> None:
     st.caption(
         "Wprowadź dane zdarzenia i pobierz prognozę klasy obrażeń z istniejącego API projektu."
     )
+    _render_class_legend(st)
 
     defaults = default_form_values()
+    options = load_category_options()
+    if not options:
+        st.warning(
+            "Nie znaleziono pliku `encoders.pkl` - listy wartości są ograniczone. "
+            "Uruchom `kedro run`, aby wygenerować enkodery."
+        )
+
     api_url = st.sidebar.text_input(
         "Adres API predykcji",
         value=os.getenv("PREDICTION_API_URL", DEFAULT_API_URL),
@@ -241,21 +327,21 @@ def main() -> None:
         """
     )
 
-    if st.sidebar.button("Sprawdź połączenie z API"):
-        try:
-            health = check_api_health(api_url)
-        except PredictionAPIError as exc:
-            st.sidebar.error(str(exc))
+    # automatyczne sprawdzenie polaczenia z API przy starcie
+    try:
+        health = check_api_health(api_url)
+    except PredictionAPIError as exc:
+        st.sidebar.error("API niedostępne - uruchom backend FastAPI.")
+        st.sidebar.caption(str(exc))
+    else:
+        if health.get("model_loaded"):
+            st.sidebar.success("API działa, model załadowany.")
         else:
-            st.sidebar.success("API działa poprawnie.")
-            st.sidebar.json(health)
+            st.sidebar.warning("API działa, ale brak modelu (wynik może być UNKNOWN).")
+        with st.sidebar.expander("Szczegóły API"):
+            st.json(health)
 
-    st.info(
-        "Jeśli API nie ma załadowanego modelu, wynik może zwrócić `UNKNOWN`. "
-        "To aplikacja front-endowa korzystająca z istniejącego endpointu `/predict`."
-    )
-
-    form_state = _render_form(st, defaults)
+    form_state = _render_form(st, defaults, options)
     if not form_state["submitted"]:
         return
 
@@ -307,4 +393,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

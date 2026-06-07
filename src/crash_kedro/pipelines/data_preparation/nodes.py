@@ -19,7 +19,7 @@ def drop_unnecessary_columns(df: pd.DataFrame, parameters: dict) -> pd.DataFrame
 
 
 def clean_missing_values(df: pd.DataFrame) -> pd.DataFrame:
-    # TODO: pomyslec o lepszej imputacji - moze KNN imputer
+    # prosta imputacja: moda dla tekstu, mediana dla liczb
     for col in df.select_dtypes(include=["object"]).columns:
         df[col] = df[col].fillna(df[col].mode()[0] if not df[col].mode().empty else "UNKNOWN")
 

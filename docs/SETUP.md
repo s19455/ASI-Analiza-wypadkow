@@ -198,7 +198,7 @@ Wymagane są pliki modeli w `data/06_models/` (np. `model.pkl`, `encoders.pkl`).
 **Objawy:** `health()` zwraca `"model_loaded": false`
 
 **Rozwiązanie:**
-1. Upewnij się, żeśród jest plik `data/06_models/model.pkl` lub `tuned_model.pkl`
+1. Upewnij się, że jest plik `data/06_models/model.pkl` lub `tuned_model.pkl`
 2. Uruchom pełny pipeline: `kedro run`
 3. Lub ustaw ścieżkę środowiską: `export MODEL_PATH=/path/to/model.pkl`
 

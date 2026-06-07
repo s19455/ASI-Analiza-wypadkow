@@ -1,8 +1,13 @@
 """Pipeline AutoML z Autogluonem - automatyczny trening ensembli."""
 
+from pathlib import Path
+
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from sklearn.model_selection import train_test_split
+
+# katalog na modele autogluon - liczony od roota projektu, zeby dzialalo niezaleznie od cwd
+AUTOGLUON_PATH = Path(__file__).resolve().parents[4] / "data" / "06_models" / "autogluon"
 
 
 def run_autogluon(df: pd.DataFrame, parameters: dict):
@@ -19,7 +24,7 @@ def run_autogluon(df: pd.DataFrame, parameters: dict):
     predictor = TabularPredictor(
         label="Severity_Group",
         eval_metric="f1_weighted",
-        path="data/06_models/autogluon/",
+        path=str(AUTOGLUON_PATH),
     ).fit(
         train_data=train,
         time_limit=600,
@@ -49,5 +54,21 @@ def run_autogluon(df: pd.DataFrame, parameters: dict):
         "models_trained": len(leaderboard),
         "leaderboard_top": leaderboard.head(10).to_dict(orient="records"),
     }
+
+    # Logowanie do MLflow
+    try:
+        import mlflow
+
+        mlflow.set_experiment("crash-severity-autogluon")
+        with mlflow.start_run(run_name="autogluon"):
+            mlflow.log_param("best_model", metrics["best_model"])
+            mlflow.log_param("models_trained", metrics["models_trained"])
+            mlflow.log_metrics({
+                "autogluon_accuracy": acc,
+                "autogluon_f1_weighted": f1_w,
+                "autogluon_f1_macro": f1_m,
+            })
+    except Exception as e:
+        print(f"[MLflow] Pominieto logowanie: {e}")
 
     return predictor, metrics

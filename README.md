@@ -42,20 +42,7 @@ Dane są mocno niezbalansowane (klasa SERIOUS to ~1%), więc patrzymy głównie 
 - API FastAPI + Docker + Streamlit
 - CI/CD na GitHub Actions
 - Monitoring driftu (Evidently + `scripts/run_drift_monitoring.py`)
-- **Pełna dokumentacja w katalogu `docs/`**
-
-## Zgodność z wymaganiami projektu
-
-✅ **Przenoszalność między środowiskami** — Git, requirements.txt, Dockerfile  
-✅ **Łatwe odtworzenie** — Docker (API), instrukcje SETUP.md (pełny projekt)  
-✅ **Rozdzielenie logiki (data | model | app)** — Oddzielne pipeline'y + API  
-✅ **Modularność** — Funkcje, pipeline'y, moduły, dobrze zorganizowana struktura  
-✅ **Dokumentacja** — README.md + pełny katalog docs/ (SETUP, ARCHITECTURE, API, DATA_DICTIONARY, MODELS, CONTRIBUTING)  
-✅ **Czysty kod / PEP8** — Pylint 10/10/10, ruff bez błędów  
-✅ **Minimum 8 pkt Pylint** — Sprawdzone: 10.00/10  
-✅ **Aplikacja jako API** — FastAPI + HTTP endpoints  
-✅ **requirements.txt + Dockerfile** — Oba przechowywane  
-✅ **CI/CD** — GitHub Actions workflows (ci.yml, cd.yml, ct.yml)
+- Dokumentacja w katalogu `docs/`
 
 ## Uruchomienie
 
@@ -128,8 +115,8 @@ W aplikacji można uzupełnić dane wypadku, a następnie otrzymać:
 
 **Pełne instrukcje:** [docs/SETUP.md](docs/SETUP.md)
 
-> Uwaga: projekt testowaliśmy na Pythonie 3.13 z Kedro 1.2.0 - cały zestaw ML
-> (`scikit-learn`, `xgboost`, `lightgbm`, `tpot`, `autogluon.tabular`) działa.
+> Uwaga: CI i Docker używają Pythona 3.12. Cały zestaw ML
+> (`scikit-learn`, `xgboost`, `lightgbm`, `autogluon.tabular`) instaluje się z `requirements.txt`.
 > Do samego backendu + Streamlit wystarczy `requirements-api.txt`.
 
 API szuka modelu najpierw w `MODEL_PATH`, a następnie w katalogu `data/06_models/`
@@ -144,112 +131,50 @@ ruff check src tests         # linting
 pylint src/crash_kedro/api/app.py src/crash_kedro/utils/encoders.py src/crash_kedro/__main__.py
 ```
 
-W praktyce najważniejszy jest wynik `pylint` na głównych modułach aplikacji — obecna konfiguracja
-osiąga wynik powyżej wymaganego progu 8 pkt.
+Lintujemy `ruff` i `pylint` (głównie moduły API). Staramy się trzymać próg 8 pkt z pylinta.
 
-**Sprawdzony wynik:** pylint 10.00/10 ✅
+## Dokumentacja
 
-##  Pełna dokumentacja
-
-Zapraszamy do katalogu `docs/` dla szczegółowej dokumentacji:
-- **[SETUP.md](docs/SETUP.md)** — Instrukcje instalacji i uruchomienia (3 opcje)
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Opis architektury i modularności (3 warstwy)
-- **[API.md](docs/API.md)** — Pełna dokumentacja API FastAPI z przykładami
-- **[DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md)** — Słownik danych (172k wierszy, 43 kolumny)
-- **[MODELS.md](docs/MODELS.md)** — Opis modeli i wyników (5 algorytmów testowanych)
-- **[PRESENTATION.md](docs/PRESENTATION.md)** — Plan slajdów i demo na prezentację końcową
-- **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** — Wytyczne dla deweloperów i workflow Git
+Więcej szczegółów w katalogu `docs/`:
+- [SETUP.md](docs/SETUP.md) — instalacja i uruchomienie
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — architektura i podział na warstwy
+- [API.md](docs/API.md) — dokumentacja API
+- [DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) — słownik danych
+- [MODELS.md](docs/MODELS.md) — opis modeli i wyników
+- [PRESENTATION.md](docs/PRESENTATION.md) — plan prezentacji
+- [CONTRIBUTING.md](docs/CONTRIBUTING.md) — jak dodać nowy pipeline
 
 ## Struktura
 
 ```
 conf/                  # konfiguracja Kedro (catalog, parameters)
 data/                  # dane + modele + raporty (konwencja Kedro)
-docs/                  #  PEŁNA DOKUMENTACJA (zobacz powyżej)
+docs/                  # dokumentacja (zobacz wyżej)
 src/crash_kedro/
     pipelines/         # data_preparation, data_modeling, automl,
                        # tuning, autogluon, feature_selection
     api/               # FastAPI
+    ui/                # frontend Streamlit
     monitoring/        # drift detection
 notebooks/             # 01_baseline (EDA + RF), 02_model_comparison
-scripts/               # demo, walidacja modelu
-.github/workflows/     # CI/CD
+scripts/               # demo, monitoring driftu, walidacja modelu
+.github/workflows/     # CI/CD/CT
 models/                # README - modele zapisywane w data/06_models/
-tests/                 # Unit + integration testy
+tests/                 # testy
 ```
 
-## ✅ Spełnione wymagania z `wymagania.txt`
+## Jak projekt realizuje wymagania
 
-### Łatwa przenoszalność między środowiskami
-- ✅ Pełne repozytorium GitHub
-- ✅ `requirements.txt` i `requirements-api.txt`
-- ✅ `pyproject.toml` z definicją pakietu
-- ✅ Dockerfile + docker-compose.yml
-
-### Łatwe odtworzenie w różnych środowiskach
-- ✅ **Opcja 1 (Docker):** `docker-compose up --build` — bez dodatkowej konfiguracji
-- ✅ **Opcja 2 (Full project):** `setup.bat` (Windows) lub `setup.sh` (Linux)
-- ✅ **Opcja 3 (API only):** `requirements-api.txt`
-
-### Rozdzielenie logiki: data | model | app
-- ✅ **Data:** `src/crash_kedro/pipelines/data_preparation/`
-- ✅ **Model:** `src/crash_kedro/pipelines/data_modeling/` + tuning + AutoML
-- ✅ **App:** `src/crash_kedro/api/` (FastAPI)
-
-### Modularność na poziomie funkcji i katalogów
-- ✅ Funkcje bez efektów ubocznych (pure functions)
-- ✅ Pipeline'y Kedro (7 niezależnych pipeline'ów)
-- ✅ Oddzielne moduły utils (`encoders.py`, `monitoring/`, itp.)
-- ✅ Czysta struktura katalogów (konwencja Kedro)
-
-### Dokumentacja
-- ✅ **README.md** — opis, wyniki, uruchamianie ✓ (ten plik)
-- ✅ **docs/SETUP.md** — instrukcje instalacji i troubleshooting
-- ✅ **docs/ARCHITECTURE.md** — opis architektury i modulami
-- ✅ **docs/API.md** — endpointy, schemat JSON, przykłady
-- ✅ **docs/DATA_DICTIONARY.md** — słownik 43 kolumn, mapowania
-- ✅ **docs/MODELS.md** — opis 5 algorytmów, wyniki
-- ✅ **docs/CONTRIBUTING.md** — wytyczne dla dev, workflow Git
-- ✅ **Docstrings** — NumPy style na kluczowych funkcjach
-
-### Czysty kod spełniający PEP8
-- ✅ **Pylint:** 10.00/10 (sprawdzono 3 główne moduły)
-- ✅ **Ruff:** Wszystkie checky pass
-- ✅ **Type hints:** Używane na kluczowych funkcjach
-- ✅ **Nazewnictwo:** Zmienne i funkcje snake_case, klasy PascalCase
-- ✅ **Brak redundancji:** Kod DRY, funkcje reużywalne
-
-### Aplikacja jako API z minimum 8 pkt Pylint
-- ✅ **FastAPI** — `/predict`, `/health`, `/predictions/recent`
-- ✅ **Pylint score:** **10.00/10** ✓
-- ✅ **Pydantic models** — CrashInput, PredictionOutput
-- ✅ **Komunikacja JSON** — Swagger UI dostępny pod `/docs`
-
-### Plik README z wymaganiami i uruchomieniem
-- ✅ Opis problemu (klasyfikacja wypadków, 3 klasy, 172k wierszy)
-- ✅ Wyniki modeli (tabelka z 5 algorytmami)
-- ✅ Instrukcje uruchomienia (3 opcje)
-- ✅ Instrukcje konfiguracji (requirements, dockerfile)
-- ✅ Strukturę projektu wyjaśnioną
-
-### Uruchamianie bez konfiguracji OS
-- ✅ **Docker:** Całkowicie izolowane, nie wymaga setup OS
-- ✅ **setup.bat/setup.sh:** Automacja dla native development
-- ✅ `requirements.txt` — pip install zamiast ręcznej konfiguracji
-- ✅ `scripts/run_drift_monitoring.py` — monitoring driftu danych i raport HTML/JSON
-
-### CI/CD
-- ✅ **`.github/workflows/ci.yml`** — testy na każdy push (pytest, ruff, pylint)
-- ✅ **`.github/workflows/cd.yml`** — build Docker na tag release + opcjonalny deploy na zdalny host
-- ✅ **`.github/workflows/ct.yml`** — continuous training + monitoring driftu + artefakty
-
-### Format przekazania
-- ✅ Repozytorium GitHub
-- ✅ Pełna dokumentacja w README + docs/
-- ✅ Plik z wymaganiami (`requirements.txt`, `requirements-api.txt`)
-- ✅ Plik konfiguracyjny (`conf/base/catalog.yml`, `conf/base/parameters.yml`)
-- ✅ Dockerfile + docker-compose.yml
-- ✅ Wszystkie pliki do odtworzenia aplikacji
+- **Baseline (notebook)** — `notebooks/01_baseline_model.ipynb`: EDA, preprocessing, trening RF, ewaluacja.
+- **Pipeline ML (Kedro)** — `data_preparation` + `data_modeling`, dodatkowo `tuning`, `automl`, `autogluon`, `feature_selection`.
+- **Śledzenie eksperymentów** — MLflow (logowanie w węzłach treningu, tuningu, automl, autogluon, feature_selection).
+- **AutoML** — pipeline `autogluon` (AutoGluon) + własne porównanie modeli w `automl`.
+- **Inżynieria cech** — cechy czasowe i binarne w `data_preparation`, selekcja cech (SelectKBest) w `feature_selection`.
+- **Strojenie hiperparametrów** — Grid Search, Random Search i Optuna w pipeline `tuning`.
+- **Produkcja** — API FastAPI (`/predict`, `/health`, `/predictions/recent`) + frontend Streamlit, uruchamiane lokalnie lub w Dockerze.
+- **Monitoring** — logowanie predykcji do `logs/predictions.jsonl` + wykrywanie driftu (Evidently) w `scripts/run_drift_monitoring.py`.
+- **MLOps (CI/CD/CT)** — GitHub Actions: testy + linting (`ci.yml`), build/deploy Dockera (`cd.yml`), ponowny trening na harmonogramie (`ct.yml`).
+- **Dokumentacja** — README + katalog `docs/` + diagram architektury (`docs/architecture.drawio`).
 
 ## Autorzy
 

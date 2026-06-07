@@ -49,8 +49,8 @@ docs/
 Projekt zaliczeniowy z przedmiotu **Środowiska uruchomieniowe Machine Learning (ASI)** na PJATK.
 
 Autorzy:
-- Artur Cichocki, 
-- Batrosz Pikutin, 
+- Artur Cichocki
+- Bartosz Pikutin
 - Wiktor Golba
 
 Data: maj 2026

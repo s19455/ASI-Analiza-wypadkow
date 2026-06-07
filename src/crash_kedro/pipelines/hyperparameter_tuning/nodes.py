@@ -110,8 +110,7 @@ def grid_random_search(df: pd.DataFrame, parameters: dict):
         stratify=y,
     )
 
-    # Grid Search - maly grid (3*3 = 9 kombinacji)
-    # FIXME: gdyby bylo wiecej czasu - rozszerzyc grid o min_samples_split itd.
+    # Grid Search - maly grid (3*3 = 9 kombinacji), zeby trening sie nie ciagnal
     grid_params = {
         "n_estimators": [100, 200, 300],
         "max_depth": [10, 20, None],

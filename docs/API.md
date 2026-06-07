@@ -33,7 +33,7 @@ Content-Type: application/json
   "driver_distracted_by": "NOT DISTRACTED",
   "vehicle_body_type": "PASSENGER CAR",
   "vehicle_damage_extent": "FUNCTIONAL",
-  "vehicle_movement": "MOVING CONSTANT",
+  "vehicle_movement": "MOVING CONSTANT SPEED",
   "speed_limit": 35,
   "driver_at_fault": "Yes",
   "driverless_vehicle": "No",
@@ -72,7 +72,7 @@ Content-Type: application/json
 | `driver_distracted_by` | string | NOT DISTRACTED | Rozproszenie uwagi kierowcy |
 | `vehicle_body_type` | string | PASSENGER CAR | Typ pojazdu (MOTORCYCLE, TRUCK, itd.) |
 | `vehicle_damage_extent` | string | FUNCTIONAL | Zakres szkód (MINIMAL, MODERATE, SEVERE, itd.) |
-| `vehicle_movement` | string | MOVING CONSTANT | Ruch pojazdu (STOPPED, MOVING, itd.) |
+| `vehicle_movement` | string | MOVING CONSTANT SPEED | Ruch pojazdu (STOPPED, MOVING, itd.) |
 | `speed_limit` | integer | 35 | Ograniczenie prędkości (km/h) **0-120** |
 | `driver_at_fault` | string | Yes | Kierowca winny (Yes/No) |
 | `driverless_vehicle` | string | No | Pojazd autonomiczny (Yes/No) |
@@ -206,7 +206,7 @@ curl -X POST http://localhost:8000/predict \
     "driver_distracted_by": "NOT DISTRACTED",
     "vehicle_body_type": "PASSENGER CAR",
     "vehicle_damage_extent": "FUNCTIONAL",
-    "vehicle_movement": "MOVING CONSTANT",
+    "vehicle_movement": "MOVING CONSTANT SPEED",
     "speed_limit": 35,
     "driver_at_fault": "Yes",
     "driverless_vehicle": "No",
@@ -247,7 +247,7 @@ payload = {
     "driver_distracted_by": "NOT DISTRACTED",
     "vehicle_body_type": "PASSENGER CAR",
     "vehicle_damage_extent": "FUNCTIONAL",
-    "vehicle_movement": "MOVING CONSTANT",
+    "vehicle_movement": "MOVING CONSTANT SPEED",
     "speed_limit": 35,
     "driver_at_fault": "Yes",
     "driverless_vehicle": "No",

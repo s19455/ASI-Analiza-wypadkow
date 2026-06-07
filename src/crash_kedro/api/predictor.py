@@ -44,7 +44,7 @@ DEFAULT_FORM_VALUES = {
     "driver_distracted_by": "NOT DISTRACTED",
     "vehicle_body_type": "PASSENGER CAR",
     "vehicle_damage_extent": "FUNCTIONAL",
-    "vehicle_movement": "MOVING CONSTANT",
+    "vehicle_movement": "MOVING CONSTANT SPEED",
     "speed_limit": 35,
     "driver_at_fault": "Yes",
     "driverless_vehicle": "No",

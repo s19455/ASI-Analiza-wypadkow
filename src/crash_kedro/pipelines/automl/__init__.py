@@ -1,4 +1,4 @@
-"""AutoML pipeline using TPOT."""
+"""AutoML pipeline - porownanie kilku modeli i wybor najlepszego."""
 
 from .pipeline import create_pipeline
 

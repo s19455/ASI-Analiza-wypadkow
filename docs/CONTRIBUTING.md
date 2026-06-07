@@ -70,7 +70,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     ])
 ```
 
-Puis dodaj do `src/crash_kedro/pipeline_registry.py`:
+Następnie dodaj do `src/crash_kedro/pipeline_registry.py`:
 ```python
 try:
     from crash_kedro.pipelines.my_pipeline import create_pipeline as my_pipeline

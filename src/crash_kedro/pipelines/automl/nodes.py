@@ -78,4 +78,20 @@ def run_automl(df: pd.DataFrame, parameters: dict):
         "all_results": all_results,
     }
 
+    # Logowanie do MLflow
+    try:
+        import mlflow
+
+        mlflow.set_experiment("crash-severity-automl")
+        with mlflow.start_run(run_name="automl_comparison"):
+            mlflow.log_param("best_pipeline", best_name)
+            mlflow.log_param("n_candidates", len(candidates))
+            mlflow.log_metrics({
+                "automl_accuracy": metrics["automl_accuracy"],
+                "automl_f1_weighted": metrics["automl_f1_weighted"],
+                "automl_f1_macro": metrics["automl_f1_macro"],
+            })
+    except Exception as e:
+        print(f"[MLflow] Pominieto logowanie: {e}")
+
     return best_model, metrics
