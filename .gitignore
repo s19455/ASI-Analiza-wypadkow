@@ -5,9 +5,6 @@ notatki_*.md
 omowienie_*.md
 _notatki*
 
-# docs - na razie nie pokazujemy
-docs/
-
 # pdf z wymaganiami - trzymamy lokalnie, poza repo
 wymagania.pdf
 
