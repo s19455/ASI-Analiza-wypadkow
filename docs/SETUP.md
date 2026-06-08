@@ -2,7 +2,7 @@
 
 ## Wymagania systemowe
 
-- **Python:** 3.10 lub wyżej
+- **Python:** 3.10-3.12 (CI i Docker używają 3.12)
 - **Git:** do klonowania repozytorium
 - **Docker** (opcjonalnie): do uruchomienia API w kontenerze
 - **RAM:** co najmniej 4 GB
@@ -115,7 +115,7 @@ kedro run --pipeline=feature_selection
 # AutoML (AutoGluon)
 kedro run --pipeline=autogluon
 
-# AutoML (TPOT inne podejście)
+# Porównanie kilku modeli
 kedro run --pipeline=automl
 ```
 
@@ -156,7 +156,7 @@ python scripts/verify_encoders.py
 # Uruchomienie wszystkich testów
 pytest -q
 
-# Pokrycie kodów
+# Pokrycie kodu
 pytest --cov=src/crash_kedro
 
 # Linting (ruff)
@@ -185,10 +185,8 @@ uvicorn crash_kedro.api.app:app --reload
 
 Wymagane są pliki modeli w `data/06_models/` (np. `model.pkl`, `encoders.pkl`).
 
-> Jeśli pracujesz na Pythonie 3.13, pełny zestaw ML może nie instalować się bezpośrednio
-> z powodu braku zgodnych buildów dla części pakietów treningowych. W takim przypadku
-> użyj `requirements-api.txt` dla backendu + Streamlit, a pełne środowisko ML uruchamiaj
-> najlepiej na Pythonie 3.10–3.12.
+> Do samego API + Streamlit wystarczy `requirements-api.txt`. Pełny zestaw ML
+> (trening, tuning, AutoML) instaluj z `requirements.txt` na Pythonie 3.10-3.12.
 
 ---
 
@@ -256,13 +254,5 @@ pylint src/crash_kedro/api/app.py src/crash_kedro/utils/encoders.py
 python scripts/demo.py
 ```
 
-Jeśli wszystkie komendy się powodzą, instalacja jest poprawna.
-
----
-
-## Kolejne kroki
-
-- Przeczytaj [ARCHITECTURE.md](ARCHITECTURE.md), aby zrozumieć strukturę projektu
-- Przeczytaj [API.md](API.md), aby poznać endpointy
-- Przeczytaj [DATA_DICTIONARY.md](DATA_DICTIONARY.md), aby zrozumieć dane wejściowe
+Jeśli wszystkie komendy działają, instalacja jest poprawna.
 
