@@ -146,9 +146,6 @@ python scripts/run_drift_monitoring.py
 
 # Walidacja wytrenowanego modelu
 python scripts/validate_model.py
-
-# Weryfikacja enkoderów
-python scripts/verify_encoders.py
 ```
 
 ### Testy i analiza kodu
