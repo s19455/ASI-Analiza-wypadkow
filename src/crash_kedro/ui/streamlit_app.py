@@ -46,7 +46,7 @@ MONTH_NAMES = {
     12: "Grudzień",
 }
 
-# pola formularza (selectbox) -> nazwy kolumn z modelu/enkoderow
+# Pola formularza (selectbox) -> nazwy kolumn z modelu/enkoderów.
 CATEGORY_COLUMNS = {
     "weather": "Weather",
     "light": "Light",
@@ -61,6 +61,94 @@ CATEGORY_COLUMNS = {
 }
 
 ENCODERS_PATH = Path(__file__).resolve().parents[3] / "data" / "06_models" / "encoders.pkl"
+FORM_STATE_PREFIX = "crash_form_"
+
+SCENARIO_PRESETS = {
+    "Typowy bezpieczny wypadek": {
+        "description": "Dzień, dobra pogoda, sucha nawierzchnia i niskie uszkodzenia pojazdu.",
+        "values": {
+            "weather": "CLEAR",
+            "light": "DAYLIGHT",
+            "collision_type": "SAME DIR REAR END",
+            "surface_condition": "DRY",
+            "traffic_control": "NO CONTROLS",
+            "driver_substance_abuse": "NONE DETECTED",
+            "driver_distracted_by": "NOT DISTRACTED",
+            "vehicle_damage_extent": "FUNCTIONAL",
+            "vehicle_movement": "MOVING CONSTANT SPEED",
+            "speed_limit": 35,
+            "driver_at_fault": "Yes",
+            "driverless_vehicle": "No",
+            "parked_vehicle": "No",
+            "crash_hour": 12,
+            "crash_dayofweek": 2,
+            "crash_month": 6,
+        },
+    },
+    "Noc i mokra nawierzchnia": {
+        "description": "Ciemno, deszczowo i mokro - szybki test gorszych warunków drogowych.",
+        "values": {
+            "weather": "RAINING",
+            "light": "DARK LIGHTS ON",
+            "collision_type": "SAME DIR REAR END",
+            "surface_condition": "WET",
+            "traffic_control": "TRAFFIC SIGNAL",
+            "driver_substance_abuse": "NONE DETECTED",
+            "driver_distracted_by": "NOT DISTRACTED",
+            "vehicle_damage_extent": "FUNCTIONAL",
+            "vehicle_movement": "MOVING CONSTANT SPEED",
+            "speed_limit": 45,
+            "driver_at_fault": "Yes",
+            "driverless_vehicle": "No",
+            "parked_vehicle": "No",
+            "crash_hour": 22,
+            "crash_dayofweek": 5,
+            "crash_month": 11,
+        },
+    },
+    "Wysokie uszkodzenia pojazdu": {
+        "description": "Większe uszkodzenia i wyższy limit prędkości przy standardowych warunkach.",
+        "values": {
+            "weather": "CLEAR",
+            "light": "DAYLIGHT",
+            "collision_type": "ANGLE MEETS LEFT TURN",
+            "surface_condition": "DRY",
+            "traffic_control": "TRAFFIC SIGNAL",
+            "driver_substance_abuse": "NONE DETECTED",
+            "driver_distracted_by": "NOT DISTRACTED",
+            "vehicle_damage_extent": "DISABLING",
+            "vehicle_movement": "MOVING CONSTANT SPEED",
+            "speed_limit": 55,
+            "driver_at_fault": "Yes",
+            "driverless_vehicle": "No",
+            "parked_vehicle": "No",
+            "crash_hour": 16,
+            "crash_dayofweek": 4,
+            "crash_month": 7,
+        },
+    },
+    "Potencjalnie poważne zdarzenie": {
+        "description": "Noc, mokra nawierzchnia, wyższa prędkość i poważniejsze uszkodzenia.",
+        "values": {
+            "weather": "RAINING",
+            "light": "DARK NO LIGHTS",
+            "collision_type": "HEAD ON",
+            "surface_condition": "WET",
+            "traffic_control": "NO CONTROLS",
+            "driver_substance_abuse": "ALCOHOL PRESENT",
+            "driver_distracted_by": "UNKNOWN",
+            "vehicle_damage_extent": "DESTROYED",
+            "vehicle_movement": "MOVING CONSTANT SPEED",
+            "speed_limit": 65,
+            "driver_at_fault": "Yes",
+            "driverless_vehicle": "No",
+            "parked_vehicle": "No",
+            "crash_hour": 2,
+            "crash_dayofweek": 6,
+            "crash_month": 12,
+        },
+    },
+}
 
 
 def load_category_options(encoders_path: Path = ENCODERS_PATH) -> dict[str, list[str]]:
@@ -87,24 +175,59 @@ def load_category_options(encoders_path: Path = ENCODERS_PATH) -> dict[str, list
     return options
 
 
+def _form_key(field_name: str) -> str:
+    return f"{FORM_STATE_PREFIX}{field_name}"
+
+
 def _render_select(
     streamlit: Any,
     label: str,
     options: list[str],
     default: str,
     help_text: str,
+    key: str,
 ) -> str:
     """Render a selectbox, making sure the default value is always selectable."""
 
     choices = list(options)
     if default not in choices:
         choices = [default, *choices]
-    return streamlit.selectbox(label, choices, index=choices.index(default), help=help_text)
+    current_value = streamlit.session_state.get(key)
+    if current_value is not None and current_value not in choices:
+        choices = [str(current_value), *choices]
+    return streamlit.selectbox(
+        label,
+        choices,
+        index=choices.index(default),
+        help=help_text,
+        key=key,
+    )
 
 
-def _render_binary_choice(streamlit: Any, label: str, default: str) -> str:
+def _render_binary_choice(streamlit: Any, label: str, default: str, key: str) -> str:
     options = ["Yes", "No"]
-    return streamlit.selectbox(label, options, index=0 if default == "Yes" else 1)
+    return streamlit.selectbox(label, options, index=0 if default == "Yes" else 1, key=key)
+
+
+def _render_scenario_picker(streamlit: Any, defaults: Mapping[str, Any]) -> dict[str, Any]:
+    """Render quick test scenarios and apply selected values to the form."""
+
+    selected_scenario = streamlit.sidebar.selectbox(
+        "Szybki scenariusz testowy",
+        options=list(SCENARIO_PRESETS),
+        help="Wypełnia formularz przykładowymi danymi do szybkiego porównania predykcji.",
+    )
+    preset = SCENARIO_PRESETS[selected_scenario]
+    streamlit.sidebar.caption(str(preset["description"]))
+
+    values = dict(defaults)
+    if streamlit.sidebar.button("Wczytaj scenariusz", use_container_width=True):
+        values.update(preset["values"])
+        for field_name, value in preset["values"].items():
+            streamlit.session_state[_form_key(field_name)] = value
+        streamlit.sidebar.success(f"Wczytano: {selected_scenario}")
+
+    return values
 
 
 def _render_form(
@@ -124,6 +247,7 @@ def _render_form(
                 options.get("weather", []),
                 str(defaults["weather"]),
                 "Warunki pogodowe w chwili zdarzenia.",
+                _form_key("weather"),
             )
             light = _render_select(
                 streamlit,
@@ -131,6 +255,7 @@ def _render_form(
                 options.get("light", []),
                 str(defaults["light"]),
                 "Pora dnia / oświetlenie drogi.",
+                _form_key("light"),
             )
             collision_type = _render_select(
                 streamlit,
@@ -138,6 +263,7 @@ def _render_form(
                 options.get("collision_type", []),
                 str(defaults["collision_type"]),
                 "Rodzaj zderzenia pojazdów.",
+                _form_key("collision_type"),
             )
             surface_condition = _render_select(
                 streamlit,
@@ -145,6 +271,7 @@ def _render_form(
                 options.get("surface_condition", []),
                 str(defaults["surface_condition"]),
                 "Stan nawierzchni drogi.",
+                _form_key("surface_condition"),
             )
             traffic_control = _render_select(
                 streamlit,
@@ -152,6 +279,7 @@ def _render_form(
                 options.get("traffic_control", []),
                 str(defaults["traffic_control"]),
                 "Rodzaj sygnalizacji / oznakowania.",
+                _form_key("traffic_control"),
             )
             driver_substance_abuse = _render_select(
                 streamlit,
@@ -159,6 +287,7 @@ def _render_form(
                 options.get("driver_substance_abuse", []),
                 str(defaults["driver_substance_abuse"]),
                 "Czy wykryto substancje u kierowcy.",
+                _form_key("driver_substance_abuse"),
             )
             driver_distracted_by = _render_select(
                 streamlit,
@@ -166,6 +295,7 @@ def _render_form(
                 options.get("driver_distracted_by", []),
                 str(defaults["driver_distracted_by"]),
                 "Co rozpraszało kierowcę.",
+                _form_key("driver_distracted_by"),
             )
 
         with right_column:
@@ -176,6 +306,7 @@ def _render_form(
                 options.get("vehicle_body_type", []),
                 str(defaults["vehicle_body_type"]),
                 "Rodzaj nadwozia pojazdu.",
+                _form_key("vehicle_body_type"),
             )
             vehicle_damage_extent = _render_select(
                 streamlit,
@@ -183,6 +314,7 @@ def _render_form(
                 options.get("vehicle_damage_extent", []),
                 str(defaults["vehicle_damage_extent"]),
                 "Jak bardzo pojazd został uszkodzony.",
+                _form_key("vehicle_damage_extent"),
             )
             vehicle_movement = _render_select(
                 streamlit,
@@ -190,6 +322,7 @@ def _render_form(
                 options.get("vehicle_movement", []),
                 str(defaults["vehicle_movement"]),
                 "Co robił pojazd w chwili zdarzenia.",
+                _form_key("vehicle_movement"),
             )
             speed_limit = streamlit.number_input(
                 "Ograniczenie prędkości",
@@ -198,21 +331,25 @@ def _render_form(
                 value=int(defaults["speed_limit"]),
                 step=5,
                 help="Limit drogi w km/h.",
+                key=_form_key("speed_limit"),
             )
             driver_at_fault = _render_binary_choice(
                 streamlit,
                 "Kierowca był winny?",
                 str(defaults["driver_at_fault"]),
+                _form_key("driver_at_fault"),
             )
             driverless_vehicle = _render_binary_choice(
                 streamlit,
                 "Pojazd autonomiczny?",
                 str(defaults["driverless_vehicle"]),
+                _form_key("driverless_vehicle"),
             )
             parked_vehicle = _render_binary_choice(
                 streamlit,
                 "Pojazd zaparkowany?",
                 str(defaults["parked_vehicle"]),
+                _form_key("parked_vehicle"),
             )
             vehicle_year = streamlit.number_input(
                 "Rok produkcji pojazdu",
@@ -221,6 +358,7 @@ def _render_form(
                 value=int(defaults["vehicle_year"]),
                 step=1,
                 help="Rok produkcji pojazdu uczestniczącego w zdarzeniu.",
+                key=_form_key("vehicle_year"),
             )
             crash_hour = streamlit.number_input(
                 "Godzina wypadku",
@@ -228,18 +366,21 @@ def _render_form(
                 max_value=23,
                 value=int(defaults["crash_hour"]),
                 step=1,
+                key=_form_key("crash_hour"),
             )
             crash_dayofweek = streamlit.selectbox(
                 "Dzień tygodnia",
                 options=list(DAY_NAMES),
                 format_func=lambda day: f"{day} - {DAY_NAMES[day]}",
                 index=int(defaults["crash_dayofweek"]),
+                key=_form_key("crash_dayofweek"),
             )
             crash_month = streamlit.selectbox(
                 "Miesiąc",
                 options=list(MONTH_NAMES),
                 format_func=lambda month: f"{month} - {MONTH_NAMES[month]}",
                 index=int(defaults["crash_month"]) - 1,
+                key=_form_key("crash_month"),
             )
             crash_year = streamlit.number_input(
                 "Rok wypadku",
@@ -247,6 +388,7 @@ def _render_form(
                 max_value=current_year + 1,
                 value=int(defaults["crash_year"]),
                 step=1,
+                key=_form_key("crash_year"),
             )
 
         submitted = streamlit.form_submit_button("🔮 Oblicz prawdopodobieństwo obrażeń")
@@ -313,6 +455,8 @@ def main() -> None:
             "Uruchom `kedro run`, aby wygenerować enkodery."
         )
 
+    defaults = _render_scenario_picker(st, defaults)
+
     api_url = st.sidebar.text_input(
         "Adres API predykcji",
         value=os.getenv("PREDICTION_API_URL", DEFAULT_API_URL),
@@ -327,7 +471,7 @@ def main() -> None:
         """
     )
 
-    # automatyczne sprawdzenie polaczenia z API przy starcie
+    # Automatyczne sprawdzenie połączenia z API przy starcie.
     try:
         health = check_api_health(api_url)
     except PredictionAPIError as exc:
