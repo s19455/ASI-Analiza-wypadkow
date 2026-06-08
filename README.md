@@ -2,13 +2,12 @@
 
 Projekt zaliczeniowy z ASI. Przewidywanie stopnia obrażeń w wypadkach drogowych na podstawie danych z Montgomery County, Maryland (2015-2024).
 
-## Materiały online
+## Materiały
 
 - Baseline notebook: [`notebooks/01_baseline_model.ipynb`](notebooks/01_baseline_model.ipynb)
 - Notebook porównawczy modeli: [`notebooks/02_model_comparison.ipynb`](notebooks/02_model_comparison.ipynb)
-- Diagram architektury: [`docs/architecture.drawio`](docs/architecture.drawio)
-- Instrukcje uruchomienia: [`docs/SETUP.md`](docs/SETUP.md)
-- Plan prezentacji: [`docs/PRESENTATION.md`](docs/PRESENTATION.md)
+- Diagram architektury: [`docs/architecture.drawio`](docs/architecture.drawio) (podgląd: `docs/architecture.png`)
+- Prezentacja: `docs/prezentacja.pptx`
 
 ## Problem
 
@@ -20,6 +19,20 @@ Klasyfikacja - na podstawie informacji o wypadku (pogoda, prędkość, typ koliz
 
 Dataset ma 172 tys. wierszy i 43 kolumny.
 
+## Dane
+
+Surowe dane to `data/01_raw/crash_data.csv` (Montgomery County Open Data). Najważniejsze kolumny:
+pogoda (Weather), oświetlenie (Light), typ kolizji (Collision Type), stan nawierzchni,
+kontrola ruchu, dane pojazdu (typ, rok, uszkodzenia) oraz target `Injury Severity`.
+
+W preprocessing:
+- wyrzucamy kolumny nieprzydatne / z dużą liczbą braków (Report Number, Location itp.),
+- braki uzupełniamy modą (tekst) i medianą (liczby),
+- z daty robimy cechy: godzina, dzień tygodnia, miesiąc, rok, plus `is_night`, `is_bad_weather`,
+  `is_wet_surface`, `vehicle_age`,
+- target z 5 wartości mapujemy na 3 klasy (NO_INJURY / MINOR / SERIOUS),
+- kolumny tekstowe kodujemy liczbami (nieznane wartości dostają -1).
+
 ## Wyniki
 
 | Model | Accuracy | F1 ważone | F1 makro |
@@ -30,126 +43,109 @@ Dataset ma 172 tys. wierszy i 43 kolumny.
 | Gradient Boosting | 0.82 | 0.77 | 0.40 |
 | Random Forest (baseline) | 0.82 | 0.75 | 0.33 |
 
-Dane są mocno niezbalansowane (klasa SERIOUS to ~1%), więc patrzymy głównie na F1 makro.
+Dane są mocno niezbalansowane (klasa SERIOUS to ~1%), więc patrzymy głównie na F1 makro -
+samo accuracy zawyża wynik, bo model lubi strzelać NO_INJURY.
 
-## Co jest w projekcie
+## Architektura
 
-- Pipeline Kedro - preprocessing + trening (`kedro run`)
-- Selekcja cech (SelectKBest)
-- Strojenie hiperparametrów (Grid Search, Random Search, Optuna)
-- AutoML (Autogluon)
-- Śledzenie eksperymentów (MLflow)
-- API FastAPI + Docker + Streamlit
-- CI/CD na GitHub Actions
-- Monitoring driftu (Evidently + `scripts/run_drift_monitoring.py`)
-- Dokumentacja w katalogu `docs/`
+Projekt jest podzielony na trzy części: dane, modelowanie i aplikacja. Spina to Kedro
+(pipeline'y) oraz FastAPI (serwowanie modelu). Przepływ:
+
+```
+CSV (data/01_raw)
+  -> Kedro data_preparation  -> crash_features.parquet (data/03_primary)
+  -> data_modeling / tuning / automl / autogluon -> model.pkl (data/06_models)
+  -> FastAPI /predict -> predictions.jsonl (logs/)
+crash_features -> monitoring driftu (Evidently) -> raport HTML (data/08_reporting)
+```
+
+Pipeline'y Kedro (`src/crash_kedro/pipelines/`):
+- `data_preparation` - czyszczenie, inżynieria cech, enkodowanie
+- `data_modeling` - trening baseline (Random Forest) + ewaluacja
+- `hyperparameter_tuning` - Grid Search, Random Search, Optuna
+- `automl` - porównanie kilku modeli sklearn
+- `autogluon` - AutoML (AutoGluon)
+- `feature_selection` - SelectKBest
+
+Wyniki wszystkich pipeline'ów trafiają do MLflow (`mlflow ui`).
 
 ## Uruchomienie
 
-### Najszybciej: API w Dockerze (bez konfiguracji)
+### Najszybciej: API w Dockerze
 
 ```bash
 docker-compose up --build
-# API dostępna pod http://localhost:8000/docs (Swagger UI)
+# API pod http://localhost:8000/docs (Swagger)
 ```
 
-Wymaga: Docker + docker-compose. Żadnej dodatkowej konfiguracji!
-
-### Pełny projekt (dla development)
+### Pełny projekt
 
 ```bash
-# Przygotowanie
 python -m venv .venv
 .venv\Scripts\activate              # Windows
 source .venv/bin/activate           # Linux/macOS
 
-# LUB użyj automatycznego skryptu setup:
-bash setup.sh                        # Linux/macOS
-setup.bat                            # Windows
-
 pip install -r requirements.txt
 pip install -e ".[dev]"
 
+# albo skrypt:
+bash setup.sh                       # Linux/macOS
+setup.bat                           # Windows
+```
 
-# Pipeline ML
-kedro run                              # cały pipeline
+Pipeline ML:
+```bash
+kedro run                              # caly pipeline (data + model)
 kedro run --pipeline=data_processing   # tylko przygotowanie danych
 kedro run --pipeline=modeling          # tylko trening bazowy
-kedro run --pipeline=tuning            # tuning hiperparametrów
+kedro run --pipeline=tuning            # Grid / Random / Optuna
 kedro run --pipeline=feature_selection # selekcja cech
-kedro run --pipeline=autogluon         # AutoML
-
-mlflow ui                              # przeglądanie eksperymentów
-
-python scripts/run_drift_monitoring.py  # monitoring driftu i raport HTML/JSON
-
-uvicorn crash_kedro.api.app:app --reload  # API (Swagger pod /docs)
-
-streamlit run streamlit_app.py             # frontend do wprowadzania danych i predykcji
-
-docker-compose up --build              # API w Dockerze
-
-python scripts/demo.py                 # demo z predykcjami
+kedro run --pipeline=autogluon         # AutoGluon
+kedro run --pipeline=automl            # porownanie modeli
 ```
 
-### Aplikacja Streamlit
+API, MLflow, frontend:
+```bash
+uvicorn crash_kedro.api.app:app --reload   # API (Swagger pod /docs)
+mlflow ui                                   # eksperymenty (http://localhost:5000)
+streamlit run streamlit_app.py              # frontend do predykcji
+python scripts/demo.py                      # demo na zbiorze testowym
+python scripts/run_drift_monitoring.py      # monitoring driftu
+```
 
-Frontend Streamlit korzysta z istniejącego endpointu `POST /predict` z API FastAPI.
-Domyślnie szuka backendu pod `http://localhost:8000`, ale można zmienić to przez
-zmienną środowiskową `PREDICTION_API_URL`.
+Frontend Streamlit łączy się z API (domyślnie `http://localhost:8000`, można zmienić
+zmienną `PREDICTION_API_URL`). Najpierw trzeba uruchomić backend FastAPI.
+
+> Uwaga: CI i Docker używają Pythona 3.12. Pełny zestaw ML (`scikit-learn`, `xgboost`,
+> `lightgbm`, `autogluon.tabular`) instaluje się z `requirements.txt`. Do samego API +
+> Streamlit wystarczy `requirements-api.txt`.
+
+API szuka modelu w `MODEL_PATH`, a potem w `data/06_models/` (`model.pkl`, `tuned_model.pkl`,
+`best_comparison_model.pkl`). Do kodowania cech używa `data/06_models/encoders.pkl`.
+
+Endpointy API: `POST /predict`, `GET /health`, `GET /predictions/recent`.
+
+## Testy i linting
 
 ```bash
-# Windows PowerShell
-$env:PREDICTION_API_URL = "http://localhost:8000"
-streamlit run streamlit_app.py
-
-# Linux / macOS
-export PREDICTION_API_URL=http://localhost:8000
-streamlit run streamlit_app.py
+pytest -q
+ruff check src tests
+pylint src/crash_kedro/api/app.py src/crash_kedro/utils/encoders.py
 ```
 
-W aplikacji można uzupełnić dane wypadku, a następnie otrzymać:
-- klasę wyniku (`NO_INJURY`, `MINOR`, `SERIOUS`),
-- odpowiedź po polsku, czy doszło do obrażeń,
-- prawdopodobieństwa poszczególnych klas.
+## CI/CD
 
-**Pełne instrukcje:** [docs/SETUP.md](docs/SETUP.md)
-
-> Uwaga: CI i Docker używają Pythona 3.12. Cały zestaw ML
-> (`scikit-learn`, `xgboost`, `lightgbm`, `autogluon.tabular`) instaluje się z `requirements.txt`.
-> Do samego backendu + Streamlit wystarczy `requirements-api.txt`.
-
-API szuka modelu najpierw w `MODEL_PATH`, a następnie w katalogu `data/06_models/`
-(np. `model.pkl`, `tuned_model.pkl`, `best_comparison_model.pkl`, `grid_random_model.pkl`).
-Do przygotowania cech wykorzystuje również `data/06_models/encoders.pkl`.
-
-## Jakość kodu
-
-```bash
-pytest -q                    # testy
-ruff check src tests         # linting
-pylint src/crash_kedro/api/app.py src/crash_kedro/utils/encoders.py src/crash_kedro/__main__.py
-```
-
-Lintujemy `ruff` i `pylint` (głównie moduły API). Staramy się trzymać próg 8 pkt z pylinta.
-
-## Dokumentacja
-
-Więcej szczegółów w katalogu `docs/`:
-- [SETUP.md](docs/SETUP.md) — instalacja i uruchomienie
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — architektura i podział na warstwy
-- [API.md](docs/API.md) — dokumentacja API
-- [DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) — słownik danych
-- [MODELS.md](docs/MODELS.md) — opis modeli i wyników
-- [PRESENTATION.md](docs/PRESENTATION.md) — plan prezentacji
-- [CONTRIBUTING.md](docs/CONTRIBUTING.md) — jak dodać nowy pipeline
+GitHub Actions (`.github/workflows/`):
+- `ci.yml` - testy + linting na każdy push
+- `cd.yml` - build i push obrazu Dockera na tag `v*`
+- `ct.yml` - ponowny trening + monitoring driftu na harmonogramie
 
 ## Struktura
 
 ```
 conf/                  # konfiguracja Kedro (catalog, parameters)
 data/                  # dane + modele + raporty (konwencja Kedro)
-docs/                  # dokumentacja (zobacz wyżej)
+docs/                  # diagram architektury, prezentacja
 src/crash_kedro/
     pipelines/         # data_preparation, data_modeling, automl,
                        # tuning, autogluon, feature_selection
@@ -158,23 +154,9 @@ src/crash_kedro/
     monitoring/        # drift detection
 notebooks/             # 01_baseline (EDA + RF), 02_model_comparison
 scripts/               # demo, monitoring driftu, walidacja modelu
+tests/
 .github/workflows/     # CI/CD/CT
-models/                # README - modele zapisywane w data/06_models/
-tests/                 # testy
 ```
-
-## Jak projekt realizuje wymagania
-
-- **Baseline (notebook)** — `notebooks/01_baseline_model.ipynb`: EDA, preprocessing, trening RF, ewaluacja.
-- **Pipeline ML (Kedro)** — `data_preparation` + `data_modeling`, dodatkowo `tuning`, `automl`, `autogluon`, `feature_selection`.
-- **Śledzenie eksperymentów** — MLflow (logowanie w węzłach treningu, tuningu, automl, autogluon, feature_selection).
-- **AutoML** — pipeline `autogluon` (AutoGluon) + własne porównanie modeli w `automl`.
-- **Inżynieria cech** — cechy czasowe i binarne w `data_preparation`, selekcja cech (SelectKBest) w `feature_selection`.
-- **Strojenie hiperparametrów** — Grid Search, Random Search i Optuna w pipeline `tuning`.
-- **Produkcja** — API FastAPI (`/predict`, `/health`, `/predictions/recent`) + frontend Streamlit, uruchamiane lokalnie lub w Dockerze.
-- **Monitoring** — logowanie predykcji do `logs/predictions.jsonl` + wykrywanie driftu (Evidently) w `scripts/run_drift_monitoring.py`.
-- **MLOps (CI/CD/CT)** — GitHub Actions: testy + linting (`ci.yml`), build/deploy Dockera (`cd.yml`), ponowny trening na harmonogramie (`ct.yml`).
-- **Dokumentacja** — README + katalog `docs/` + diagram architektury (`docs/architecture.drawio`).
 
 ## Autorzy
 
