@@ -1,4 +1,4 @@
-"""Helpers shared by the Streamlit front-end and prediction API clients."""
+"""Funkcje pomocnicze wspoldzielone przez frontend Streamlit i klienta API."""
 
 from __future__ import annotations
 
@@ -58,11 +58,11 @@ DEFAULT_FORM_VALUES = {
 
 
 class PredictionAPIError(RuntimeError):
-    """Raised when the prediction API cannot be reached or returns invalid data."""
+    """Rzucany, gdy API jest nieosiagalne albo zwraca niepoprawne dane."""
 
 
 def normalize_api_base_url(base_url: str | None) -> str:
-    """Return a normalized API base URL without trailing endpoint suffixes."""
+    """Zwraca znormalizowany adres bazowy API (bez koncowek endpointow)."""
 
     if not base_url:
         return DEFAULT_API_URL
@@ -75,7 +75,7 @@ def normalize_api_base_url(base_url: str | None) -> str:
 
 
 def default_form_values(reference_year: int | None = None) -> dict[str, Any]:
-    """Return default values for the accident form."""
+    """Zwraca domyslne wartosci formularza wypadku."""
 
     current_year = dt.datetime.now().year if reference_year is None else reference_year
     defaults = dict(DEFAULT_FORM_VALUES)
@@ -121,7 +121,7 @@ def build_prediction_payload(
     form_values: Mapping[str, Any],
     reference_year: int | None = None,
 ) -> dict[str, Any]:
-    """Normalize form data to the JSON payload expected by the API."""
+    """Zamienia dane z formularza na payload JSON oczekiwany przez API."""
 
     defaults = default_form_values(reference_year=reference_year)
     current_year = defaults["crash_year"]
@@ -183,7 +183,7 @@ def build_prediction_payload(
 
 
 def describe_severity(severity: Any) -> dict[str, Any]:
-    """Translate the model label into a user-friendly Polish description."""
+    """Tlumaczy etykiete modelu na czytelny opis po polsku."""
 
     severity_key = str(severity).strip().upper()
     details = SEVERITY_LABELS.get(severity_key)
@@ -204,7 +204,7 @@ def describe_severity(severity: Any) -> dict[str, Any]:
 
 
 def sorted_probabilities(probabilities: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Return probabilities sorted from the largest to the smallest value."""
+    """Zwraca prawdopodobienstwa posortowane od najwiekszego do najmniejszego."""
 
     normalized: list[dict[str, Any]] = []
     for label, value in probabilities.items():
@@ -270,7 +270,7 @@ def _json_request(
 def check_api_health(
     base_url: str | None = None, timeout: float = DEFAULT_TIMEOUT_SECONDS
 ) -> dict[str, Any]:
-    """Call the health endpoint of the prediction API."""
+    """Wywoluje endpoint /health API."""
 
     normalized_base_url = normalize_api_base_url(base_url)
     return _json_request(
@@ -286,7 +286,7 @@ def predict_via_api(
     payload: Mapping[str, Any],
     timeout: float = DEFAULT_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
-    """Send a prediction request to the API and return its JSON response."""
+    """Wysyla zadanie predykcji do API i zwraca odpowiedz JSON."""
 
     normalized_base_url = normalize_api_base_url(base_url)
     return _json_request(

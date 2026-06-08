@@ -1,4 +1,4 @@
-"""Data drift detection using Evidently."""
+"""Wykrywanie driftu danych przy uzyciu Evidently."""
 
 import pandas as pd
 
@@ -8,6 +8,7 @@ def detect_drift(
     current_data: pd.DataFrame,
     report_path: str = "data/08_reporting/drift_report.html",
 ) -> dict:
+    """Porownuje dane referencyjne z biezacymi i zapisuje raport HTML."""
     try:
         # nowsze evidently (0.5+) ma legacy API pod evidently.legacy.*
         try:

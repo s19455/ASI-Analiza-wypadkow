@@ -1,9 +1,7 @@
-"""Utilities for fitting, applying, and persisting categorical encoders.
+"""Proste enkodery kategoryczne (label encoding) zapisywane jako slowniki.
 
-The helpers in this module implement a lightweight, LabelEncoder-like workflow
-for text columns stored as ``object`` dtype in pandas DataFrames. Encoders are
-stored as plain dictionaries so they can be safely serialized with pickle and
-loaded back without additional dependencies.
+Trzymamy mapowania kategoria -> liczba w zwyklych dict, dzieki czemu latwo je
+zapisac picklem i wczytac przy inferencji bez dodatkowych zaleznosci.
 """
 
 from __future__ import annotations
@@ -30,28 +28,11 @@ def fit_encoders(
     df: pd.DataFrame,
     ignore_columns: list[str] | None = None,
 ) -> dict[str, object]:
-    """Fit encoders for text columns in a DataFrame.
+    """Dopasowuje enkodery dla kolumn tekstowych (dtype object).
 
-    Parameters
-    ----------
-    df:
-        Source DataFrame containing categorical text columns.
-    ignore_columns:
-        Optional list of column names that should be skipped during fitting.
-
-    Returns
-    -------
-    dict[str, object]
-        A dictionary mapping each encoded column name to a serializable mapping
-        of category values to integer codes.
-
-    Raises
-    ------
-    ValueError
-        If ``df`` is not a DataFrame or if ``ignore_columns`` contains invalid
-        values.
+    Zwraca slownik {nazwa_kolumny: {kategoria: kod}}. Kolumny z ignore_columns
+    sa pomijane (np. kolumna z targetem).
     """
-
     _validate_dataframe(df)
     ignore_set = _normalize_ignore_columns(ignore_columns)
 
@@ -60,16 +41,11 @@ def fit_encoders(
 
     for column_name in text_columns:
         if column_name in ignore_set:
-            LOGGER.debug("Skipping ignored column: %s", column_name)
             continue
 
         encoder = _build_encoder_mapping(df[column_name])
         encoders[column_name] = encoder
-        LOGGER.debug(
-            "Fitted encoder for column '%s' with %d categories.",
-            column_name,
-            len(encoder),
-        )
+        LOGGER.debug("Enkoder dla '%s': %d kategorii", column_name, len(encoder))
 
     return encoders
 
@@ -78,39 +54,18 @@ def transform_with_encoders(
     df: pd.DataFrame,
     encoders: dict[str, object],
 ) -> pd.DataFrame:
-    """Transform a DataFrame using fitted encoders.
+    """Koduje kolumny DataFrame'u za pomoca dopasowanych enkoderow.
 
-    The original DataFrame is not modified. Columns not present in ``encoders``
-    remain unchanged.
-
-    Parameters
-    ----------
-    df:
-        DataFrame to transform.
-    encoders:
-        Encoders produced by :func:`fit_encoders` or loaded from disk.
-
-    Returns
-    -------
-    pd.DataFrame
-        A new DataFrame with encoded columns.
-
-    Raises
-    ------
-    ValueError
-        If the inputs are invalid, if the encoder structure is malformed, or if
-        an encoder refers to a missing column in ``df``.
+    Nie modyfikuje oryginalu. Kolumny spoza ``encoders`` zostaja bez zmian.
+    Nieznane wartosci dostaja kod -1.
     """
-
     _validate_dataframe(df)
     validated_encoders = _validate_encoders_structure(encoders)
 
     transformed_df = df.copy(deep=True)
     for column_name, mapping in validated_encoders.items():
         if column_name not in transformed_df.columns:
-            raise ValueError(
-                f"Column '{column_name}' is missing from the DataFrame."
-            )
+            raise ValueError(f"Brak kolumny '{column_name}' w DataFrame.")
 
         transformed_df[column_name] = transformed_df[column_name].map(
             lambda value, column_mapping=mapping: _encode_single_value(
@@ -123,145 +78,64 @@ def transform_with_encoders(
 
 
 def save_encoders(encoders: dict[str, object], path: Path) -> None:
-    """Serialize encoders to disk using pickle.
-
-    Parameters
-    ----------
-    encoders:
-        Encoders produced by :func:`fit_encoders`.
-    path:
-        Target file path for the serialized pickle file.
-
-    Raises
-    ------
-    ValueError
-        If the encoder structure is invalid or if ``path`` is empty.
-    """
-
+    """Zapisuje enkodery do pliku pickle."""
     validated_encoders = _validate_encoders_structure(encoders)
     target_path = Path(path)
 
     if not str(target_path):
-        raise ValueError("Path must not be empty.")
+        raise ValueError("Sciezka nie moze byc pusta.")
 
     target_path.parent.mkdir(parents=True, exist_ok=True)
     with target_path.open("wb") as output_stream:
         pickle.dump(validated_encoders, output_stream, protocol=pickle.HIGHEST_PROTOCOL)
 
-    LOGGER.info("Saved encoders to %s", target_path)
+    LOGGER.info("Zapisano enkodery do %s", target_path)
 
 
 def load_encoders(path: Path) -> dict[str, object]:
-    """Load and validate encoders from a pickle file.
-
-    Parameters
-    ----------
-    path:
-        Path to a pickle file created by :func:`save_encoders`.
-
-    Returns
-    -------
-    dict[str, object]
-        Validated encoders ready to be passed to
-        :func:`transform_with_encoders`.
-
-    Raises
-    ------
-    ValueError
-        If the file does not exist, cannot be read, or does not contain a valid
-        encoder structure.
-    """
-
+    """Wczytuje i waliduje enkodery z pliku pickle."""
     source_path = Path(path)
     if not source_path.is_file():
-        raise ValueError(f"Encoder file does not exist: {source_path}")
+        raise ValueError(f"Plik z enkoderami nie istnieje: {source_path}")
 
     with source_path.open("rb") as input_stream:
         loaded_encoders = pickle.load(input_stream)
 
     validated_encoders = _validate_encoders_structure(loaded_encoders)
-    LOGGER.info("Loaded encoders from %s", source_path)
+    LOGGER.info("Wczytano enkodery z %s", source_path)
     return validated_encoders
 
 
 def _validate_dataframe(df: Any) -> None:
-    """Validate that the provided object is a pandas DataFrame.
-
-    Parameters
-    ----------
-    df:
-        Object to validate.
-
-    Raises
-    ------
-    ValueError
-        If ``df`` is not a pandas DataFrame.
-    """
-
     if not isinstance(df, pd.DataFrame):
-        raise ValueError("Expected a pandas DataFrame.")
+        raise ValueError("Oczekiwano obiektu pandas DataFrame.")
 
 
 def _normalize_ignore_columns(ignore_columns: list[str] | None) -> set[str]:
-    """Normalize ignore columns into a validated set of strings.
-
-    Parameters
-    ----------
-    ignore_columns:
-        Optional list of column names to skip.
-
-    Returns
-    -------
-    set[str]
-        A set of validated column names.
-
-    Raises
-    ------
-    ValueError
-        If ``ignore_columns`` contains values that are not strings.
-    """
-
     if ignore_columns is None:
         return set()
 
     if not isinstance(ignore_columns, list):
-        raise ValueError("ignore_columns must be a list of strings or None.")
+        raise ValueError("ignore_columns musi byc lista stringow albo None.")
 
     normalized_columns: set[str] = set()
     for column_name in ignore_columns:
         if not isinstance(column_name, str):
-            raise ValueError("ignore_columns must contain only strings.")
+            raise ValueError("ignore_columns moze zawierac tylko stringi.")
         normalized_columns.add(column_name)
 
     return normalized_columns
 
 
 def _build_encoder_mapping(series: pd.Series) -> dict[object, int]:
-    """Build a category-to-integer mapping for one series.
-
-    Parameters
-    ----------
-    series:
-        Pandas Series containing the categories to encode.
-
-    Returns
-    -------
-    dict[object, int]
-        Mapping of observed categories to integer codes.
-
-    Raises
-    ------
-    ValueError
-        If the series contains unhashable values.
-    """
-
+    """Buduje mapowanie kategoria -> kolejny numer dla jednej kolumny."""
     cleaned_series = series.dropna()
 
     try:
         unique_values = pd.unique(cleaned_series)
     except TypeError as exc:
         raise ValueError(
-            f"Column '{series.name}' contains values that cannot be encoded."
+            f"Kolumna '{series.name}' zawiera wartosci, ktorych nie da sie zakodowac."
         ) from exc
 
     mapping: dict[object, int] = {}
@@ -270,7 +144,7 @@ def _build_encoder_mapping(series: pd.Series) -> dict[object, int]:
             hash(category)
         except TypeError as exc:
             raise ValueError(
-                f"Column '{series.name}' contains unhashable values."
+                f"Kolumna '{series.name}' zawiera niehashowalne wartosci."
             ) from exc
         mapping[category] = index
 
@@ -278,35 +152,16 @@ def _build_encoder_mapping(series: pd.Series) -> dict[object, int]:
 
 
 def _validate_encoders_structure(encoders: Any) -> dict[str, dict[object, int]]:
-    """Validate the serialized encoder structure.
-
-    Parameters
-    ----------
-    encoders:
-        Object to validate.
-
-    Returns
-    -------
-    dict[str, dict[object, int]]
-        A normalized dictionary containing category-to-code mappings.
-
-    Raises
-    ------
-    ValueError
-        If the structure is malformed.
-    """
-
+    """Sprawdza, czy struktura enkoderow jest poprawna."""
     if not isinstance(encoders, dict):
-        raise ValueError("Encoders must be provided as a dictionary.")
+        raise ValueError("Enkodery musza byc slownikiem.")
 
     validated_encoders: dict[str, dict[object, int]] = {}
     for column_name, encoder in encoders.items():
         if not isinstance(column_name, str):
-            raise ValueError("Encoder keys must be column names as strings.")
+            raise ValueError("Klucze enkoderow musza byc nazwami kolumn (string).")
         if not isinstance(encoder, dict):
-            raise ValueError(
-                f"Encoder for column '{column_name}' must be a dictionary."
-            )
+            raise ValueError(f"Enkoder dla '{column_name}' musi byc slownikiem.")
 
         validated_encoder: dict[object, int] = {}
         for category, encoded_value in encoder.items():
@@ -314,11 +169,11 @@ def _validate_encoders_structure(encoders: Any) -> dict[str, dict[object, int]]:
                 hash(category)
             except TypeError as exc:
                 raise ValueError(
-                    f"Encoder for column '{column_name}' contains unhashable keys."
+                    f"Enkoder dla '{column_name}' ma niehashowalne klucze."
                 ) from exc
             if not isinstance(encoded_value, int):
                 raise ValueError(
-                    f"Encoder for column '{column_name}' must map to integers."
+                    f"Enkoder dla '{column_name}' musi mapowac na liczby calkowite."
                 )
             validated_encoder[category] = encoded_value
 
@@ -328,22 +183,7 @@ def _validate_encoders_structure(encoders: Any) -> dict[str, dict[object, int]]:
 
 
 def _encode_single_value(value: Any, mapping: dict[object, int]) -> int:
-    """Encode a single value using a validated mapping.
-
-    Parameters
-    ----------
-    value:
-        Value to encode.
-    mapping:
-        Category-to-code mapping.
-
-    Returns
-    -------
-    int
-        Integer code for the category, or ``UNKNOWN_CATEGORY_CODE`` for values
-        that are missing or unseen during fitting.
-    """
-
+    """Koduje pojedyncza wartosc; brak/nieznana -> -1."""
     if _is_missing_value(value):
         return UNKNOWN_CATEGORY_CODE
 
@@ -354,8 +194,6 @@ def _encode_single_value(value: Any, mapping: dict[object, int]) -> int:
 
 
 def _is_missing_value(value: Any) -> bool:
-    """Check whether a scalar value should be treated as missing."""
-
     try:
         missing_value = pd.isna(value)
     except (TypeError, ValueError):

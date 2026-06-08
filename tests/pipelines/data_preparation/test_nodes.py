@@ -191,7 +191,7 @@ class TestEncodeFeatures:
 
     def test_encode_features_raises_on_non_dataframe(self) -> None:
         """Test that encode_features raises ValueError for non-DataFrame input."""
-        with pytest.raises(ValueError, match="Expected a pandas DataFrame"):
+        with pytest.raises(ValueError, match="pandas DataFrame"):
             encode_features([1, 2, 3])
 
     def test_encode_features_with_unknown_categories(self, sample_df: pd.DataFrame) -> None:

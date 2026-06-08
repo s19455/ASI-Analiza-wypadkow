@@ -71,63 +71,23 @@ def map_target(df: pd.DataFrame, parameters: dict) -> pd.DataFrame:
 
 
 def encode_features(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
-    """Encode categorical features in the DataFrame.
+    """Koduje kolumny kategoryczne. Target Severity_Group zostaje bez zmian.
 
-    This function fits label encoders on all text columns (dtype='object')
-    except for the target column 'Severity_Group' and other critical columns,
-    then applies the encoders to the DataFrame.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame with categorical and numerical columns.
-        The 'Severity_Group' column is preserved as-is and not encoded.
-
-    Returns
-    -------
-    tuple[pd.DataFrame, dict]
-        A tuple containing:
-        - df_encoded: DataFrame with categorical features encoded to integers.
-        - encoders_dict: Dictionary mapping column names to encoder dictionaries
-          (mapping of original category values to integer codes).
-
-    Raises
-    ------
-    ValueError
-        If df is not a pandas DataFrame or if encoding fails.
-
-    Notes
-    -----
-    Unknown categories encountered during transformation are coded as -1.
-    The encoders can be saved to disk and reused for inference.
-
-    Examples
-    --------
-    >>> df = pd.DataFrame({
-    ...     'Weather': ['CLEAR', 'CLOUDY', 'RAIN'],
-    ...     'Severity_Group': ['NO_INJURY', 'INJURY', 'FATALITY']
-    ... })
-    >>> encoded_df, encoders = encode_features(df)
-    >>> isinstance(encoded_df, pd.DataFrame)
-    True
-    >>> isinstance(encoders, dict)
-    True
+    Zwraca zakodowany DataFrame oraz slownik enkoderow (do zapisania i ponownego
+    uzycia przy inferencji). Nieznane kategorie sa kodowane jako -1.
     """
     if not isinstance(df, pd.DataFrame):
-        raise ValueError("Expected a pandas DataFrame.")
+        raise ValueError("Oczekiwano obiektu pandas DataFrame.")
 
-    # Fit encoders on all object columns except Severity_Group
+    # enkodery na wszystkich kolumnach object oprocz targetu
     ignore_cols = ["Severity_Group"]
     encoders_dict = fit_encoders(df, ignore_columns=ignore_cols)
-
-    # Transform the DataFrame using fitted encoders
     df_encoded = transform_with_encoders(df, encoders_dict)
 
-    # Log encoding details
     logger.info(
-        "Encoded %d categorical columns. %s",
+        "Zakodowano %d kolumn kategorycznych: %s",
         len(encoders_dict),
-        ", ".join(encoders_dict.keys()) if encoders_dict else "none",
+        ", ".join(encoders_dict.keys()) if encoders_dict else "brak",
     )
 
     return df_encoded, encoders_dict

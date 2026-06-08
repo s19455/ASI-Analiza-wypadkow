@@ -1,4 +1,4 @@
-"""UI helpers for the crash severity project."""
+"""Frontend (Streamlit) projektu."""
 
 from __future__ import annotations
 

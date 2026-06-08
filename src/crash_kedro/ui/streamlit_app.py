@@ -1,4 +1,4 @@
-"""Streamlit front-end for crash severity prediction."""
+"""Frontend Streamlit do predykcji stopnia obrazen w wypadkach."""
 
 from __future__ import annotations
 
@@ -64,10 +64,10 @@ ENCODERS_PATH = Path(__file__).resolve().parents[3] / "data" / "06_models" / "en
 
 
 def load_category_options(encoders_path: Path = ENCODERS_PATH) -> dict[str, list[str]]:
-    """Read possible category values for each form field from the encoders file.
+    """Wczytuje mozliwe wartosci pol formularza z pliku enkoderow.
 
-    Returns an empty dict if the file is missing - the form then falls back to
-    just the default value for each field.
+    Gdy plik nie istnieje, zwraca pusty slownik - wtedy formularz korzysta
+    tylko z wartosci domyslnych.
     """
 
     try:
@@ -94,7 +94,7 @@ def _render_select(
     default: str,
     help_text: str,
 ) -> str:
-    """Render a selectbox, making sure the default value is always selectable."""
+    """Rysuje selectbox tak, zeby wartosc domyslna zawsze byla na liscie."""
 
     choices = list(options)
     if default not in choices:
@@ -117,7 +117,7 @@ def _render_form(
         left_column, right_column = streamlit.columns(2)
 
         with left_column:
-            streamlit.subheader("🌧️ Warunki zdarzenia")
+            streamlit.subheader("Warunki zdarzenia")
             weather = _render_select(
                 streamlit,
                 "Pogoda",
@@ -169,7 +169,7 @@ def _render_form(
             )
 
         with right_column:
-            streamlit.subheader("🚗 Pojazd i czas")
+            streamlit.subheader("Pojazd i czas")
             vehicle_body_type = _render_select(
                 streamlit,
                 "Typ pojazdu",
@@ -249,7 +249,7 @@ def _render_form(
                 step=1,
             )
 
-        submitted = streamlit.form_submit_button("🔮 Oblicz prawdopodobieństwo obrażeń")
+        submitted = streamlit.form_submit_button("Oblicz prawdopodobieństwo obrażeń")
 
     return {
         "submitted": submitted,
@@ -278,18 +278,18 @@ def _render_form(
 
 
 def _render_class_legend(streamlit: Any) -> None:
-    """Show a short legend describing the three severity classes."""
+    """Pokazuje krotka legende trzech klas obrazen."""
 
     streamlit.markdown(
         "**Klasy obrażeń:** "
-        "🟢 `NO_INJURY` - brak obrażeń &nbsp;|&nbsp; "
-        "🟡 `MINOR` - drobne obrażenia &nbsp;|&nbsp; "
-        "🔴 `SERIOUS` - poważne obrażenia / zgon"
+        "`NO_INJURY` - brak obrażeń &nbsp;|&nbsp; "
+        "`MINOR` - drobne obrażenia &nbsp;|&nbsp; "
+        "`SERIOUS` - poważne obrażenia / zgon"
     )
 
 
 def main() -> None:
-    """Run the Streamlit application."""
+    """Uruchamia aplikacje Streamlit."""
 
     try:
         import streamlit as st
@@ -299,7 +299,7 @@ def main() -> None:
         ) from exc
 
     st.set_page_config(page_title="Crash Severity Predictor", page_icon="🚗", layout="wide")
-    st.title("🚗 Analiza skutków wypadku drogowego")
+    st.title("Analiza skutków wypadku drogowego")
     st.caption(
         "Wprowadź dane zdarzenia i pobierz prognozę klasy obrażeń z istniejącego API projektu."
     )

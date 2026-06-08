@@ -87,7 +87,7 @@ app = FastAPI(
 
 
 class CrashInput(BaseModel):
-    """Request payload accepted by the prediction endpoint."""
+    """Dane wejsciowe przyjmowane przez endpoint predykcji."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -113,7 +113,7 @@ class CrashInput(BaseModel):
 
 
 class PredictionOutput(BaseModel):
-    """Response returned by the prediction endpoint."""
+    """Odpowiedz zwracana przez endpoint predykcji."""
 
     severity: str
     probabilities: dict[str, float]
@@ -140,13 +140,13 @@ def _unique_paths(paths: list[Path | None]) -> list[Path]:
 
 
 def get_model_candidates() -> list[Path]:
-    """Return possible model locations in priority order."""
+    """Zwraca mozliwe lokalizacje modelu w kolejnosci priorytetu."""
 
     return _unique_paths(MODEL_CANDIDATES)
 
 
 def get_model() -> Any | None:
-    """Load and cache the first available model artifact."""
+    """Wczytuje i cache'uje pierwszy dostepny model."""
 
     cached_path = _MODEL_CACHE["path"]
     cached_model = _MODEL_CACHE["obj"]
@@ -173,7 +173,7 @@ def get_model() -> Any | None:
 
 
 def get_encoders() -> dict[str, object] | None:
-    """Load and cache fitted encoders if the artifact exists."""
+    """Wczytuje i cache'uje enkodery, jesli plik istnieje."""
 
     cached_path = _ENCODERS_CACHE["path"]
     cached_encoders = _ENCODERS_CACHE["obj"]
@@ -203,7 +203,7 @@ def get_encoders() -> dict[str, object] | None:
 
 
 def build_prediction_frame(input_data: CrashInput) -> pd.DataFrame:
-    """Build a feature frame compatible with the training pipeline."""
+    """Buduje ramke cech zgodna z pipeline'em treningowym."""
 
     current_year = int(input_data.crash_year)
     feature_row: dict[str, Any] = {column: None for column in TRAINING_FEATURE_ORDER}
@@ -287,7 +287,7 @@ def _append_prediction_log(
 
 
 def predict_crash_severity(input_data: CrashInput) -> PredictionOutput:
-    """Run model inference and return a structured response."""
+    """Uruchamia predykcje modelu i zwraca ustrukturyzowana odpowiedz."""
 
     timestamp = dt.datetime.now().isoformat()
     model = get_model()
@@ -320,7 +320,7 @@ def predict_crash_severity(input_data: CrashInput) -> PredictionOutput:
 
 
 def health_status() -> dict[str, Any]:
-    """Return a simple readiness payload for the API."""
+    """Zwraca prosty status gotowosci API."""
 
     model = get_model()
     encoders_loaded = get_encoders() is not None
@@ -335,7 +335,7 @@ def health_status() -> dict[str, Any]:
 
 
 def get_recent_predictions(limit: int = 10) -> dict[str, list[dict[str, Any]]]:
-    """Read the most recent predictions from the JSONL log file."""
+    """Czyta ostatnie predykcje z pliku logu JSONL."""
 
     log_file = LOG_PATH / "predictions.jsonl"
     if limit <= 0 or not log_file.exists():
@@ -359,20 +359,20 @@ def get_recent_predictions(limit: int = 10) -> dict[str, list[dict[str, Any]]]:
 
 @app.get("/health")
 def health() -> dict[str, Any]:
-    """Health endpoint for readiness checks."""
+    """Endpoint sprawdzajacy gotowosc aplikacji."""
 
     return health_status()
 
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(input_data: CrashInput) -> PredictionOutput:
-    """Predict the injury severity for a single crash record."""
+    """Przewiduje stopien obrazen dla jednego zdarzenia."""
 
     return predict_crash_severity(input_data)
 
 
 @app.get("/predictions/recent")
 def recent_predictions(n: int = 10) -> dict[str, list[dict[str, Any]]]:
-    """Return the most recent logged predictions."""
+    """Zwraca ostatnie zapisane predykcje."""
 
     return get_recent_predictions(limit=n)

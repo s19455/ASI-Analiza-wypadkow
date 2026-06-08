@@ -1,7 +1,7 @@
-"""CLI helper for running drift monitoring with Evidently.
+"""Skrypt CLI do monitoringu driftu (Evidently).
 
-The script can either compare two explicitly provided datasets or, by default,
-derive a reference/current split from the project feature dataset.
+Mozna podac dwa pliki (referencyjny i biezacy) albo zostawic domyslnie - wtedy
+skrypt sam dzieli zbior cech na referencje i dane biezace.
 """
 
 from __future__ import annotations
@@ -10,14 +10,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-import pandas as pd
+import pandas as pd  # noqa: E402
 
-from crash_kedro.monitoring.drift_detector import detect_drift
+from crash_kedro.monitoring.drift_detector import detect_drift  # noqa: E402
 
 DEFAULT_REFERENCE = PROJECT_ROOT / "data" / "03_primary" / "crash_features.parquet"
 DEFAULT_REPORT_DIR = PROJECT_ROOT / "data" / "08_reporting"
@@ -26,8 +25,7 @@ DEFAULT_REPORT_HTML = DEFAULT_REPORT_DIR / "drift_report.html"
 
 
 def _load_dataframe(path: Path) -> pd.DataFrame:
-    """Load a dataframe from CSV or Parquet based on file suffix."""
-
+    """Wczytuje DataFrame z CSV albo Parquet (po rozszerzeniu pliku)."""
     if not path.exists():
         raise FileNotFoundError(f"Plik nie istnieje: {path}")
 
@@ -43,13 +41,12 @@ def _load_dataframe(path: Path) -> pd.DataFrame:
 def _derive_reference_current(
     df: pd.DataFrame,
     min_rows: int = 10,
-) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
-    """Split one dataframe into reference and current slices.
+) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    """Dzieli jeden zbior na referencje i dane biezace.
 
-    Preference is given to a time-based split using ``crash_year``. If that is
-    not possible, the function falls back to a deterministic 80/20 split.
+    Najpierw probuje podzialu po roku (``crash_year``), a jak sie nie da -
+    robi staly podzial 80/20.
     """
-
     if "crash_year" in df.columns:
         years = sorted(y for y in df["crash_year"].dropna().unique())
         if len(years) >= 2:
@@ -76,7 +73,7 @@ def _derive_reference_current(
     return reference, current, "random_split(80/20)"
 
 
-def _align_columns(reference: pd.DataFrame, current: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _align_columns(reference: pd.DataFrame, current: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     common = [column for column in reference.columns if column in current.columns]
     if not common:
         raise ValueError("Reference i current nie mają wspólnych kolumn do porównania.")
@@ -85,7 +82,7 @@ def _align_columns(reference: pd.DataFrame, current: pd.DataFrame) -> Tuple[pd.D
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run drift monitoring and save a report.")
+    parser = argparse.ArgumentParser(description="Monitoring driftu danych i zapis raportu.")
     parser.add_argument(
         "--reference",
         type=Path,
@@ -158,6 +155,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
-
