@@ -44,6 +44,7 @@ W prezentacji warto pokazać co najmniej jedno z poniższych:
 - wywołanie endpointu `/predict` w Swagger UI,
 - uruchomienie `python scripts/demo.py`,
 - widok `streamlit run streamlit_app.py`,
+- pokaz szybkich scenariuszy testowych w Streamlit i porównanie prawdopodobieństw klas,
 - skrócony raport z `mlflow ui`.
 
 ## Materiały pomocnicze

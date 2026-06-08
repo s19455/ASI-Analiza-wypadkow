@@ -136,6 +136,14 @@ uvicorn crash_kedro.api.app:app --reload
 uvicorn crash_kedro.api.app:app --host 0.0.0.0 --port 8000
 ```
 
+### Uruchomienie aplikacji Streamlit
+```bash
+streamlit run streamlit_app.py
+```
+
+Aplikacja pozwala ręcznie uzupełnić formularz predykcji lub wybrać szybki
+scenariusz testowy w panelu bocznym.
+
 ### Skrypty pomocnicze
 ```bash
 # Demo — predykcje na zbiorze testowym

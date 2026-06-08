@@ -113,6 +113,10 @@ W aplikacji można uzupełnić dane wypadku, a następnie otrzymać:
 - odpowiedź po polsku, czy doszło do obrażeń,
 - prawdopodobieństwa poszczególnych klas.
 
+Dodatkowo aplikacja zawiera szybkie scenariusze testowe, które automatycznie
+wypełniają formularz przykładowymi danymi, np. typowy bezpieczny wypadek,
+noc z mokrą nawierzchnią albo potencjalnie poważne zdarzenie.
+
 **Pełne instrukcje:** [docs/SETUP.md](docs/SETUP.md)
 
 > Uwaga: CI i Docker używają Pythona 3.12. Cały zestaw ML
