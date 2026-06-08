@@ -144,6 +144,10 @@ streamlit run streamlit_app.py
 Aplikacja pozwala ręcznie uzupełnić formularz predykcji lub wybrać szybki
 scenariusz testowy w panelu bocznym.
 
+W panelu bocznym znajduje się też historia predykcji. Streamlit pobiera ją
+z endpointu `GET /predictions/recent`, więc do jej działania potrzebny jest
+uruchomiony backend FastAPI oraz zapisane logi predykcji.
+
 ### Skrypty pomocnicze
 ```bash
 # Demo — predykcje na zbiorze testowym
