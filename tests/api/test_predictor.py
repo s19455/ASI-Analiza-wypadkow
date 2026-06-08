@@ -140,3 +140,31 @@ def test_predict_via_api_posts_payload(monkeypatch) -> None:
     assert captured["body"] == payload
 
 
+def test_fetch_recent_predictions_uses_limit(monkeypatch) -> None:
+    """Recent predictions should be fetched from /predictions/recent with a limit."""
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout):
+        captured["url"] = req.full_url
+        captured["method"] = req.get_method()
+        captured["timeout"] = timeout
+        return _FakeResponse(
+            {
+                "predictions": [
+                    {
+                        "timestamp": "2026-05-24T12:00:00",
+                        "prediction": "NO_INJURY",
+                        "probabilities": {"NO_INJURY": 0.82},
+                    }
+                ]
+            }
+        )
+
+    monkeypatch.setattr(predictor.request, "urlopen", fake_urlopen)
+
+    result = predictor.fetch_recent_predictions("http://localhost:8000/health", limit=5)
+
+    assert len(result["predictions"]) == 1
+    assert captured["url"] == "http://localhost:8000/predictions/recent?n=5"
+    assert captured["method"] == "GET"

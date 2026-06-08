@@ -18,6 +18,7 @@ from crash_kedro.api.predictor import (
     check_api_health,
     default_form_values,
     describe_severity,
+    fetch_recent_predictions,
     predict_via_api,
     sorted_probabilities,
 )
@@ -430,6 +431,140 @@ def _render_class_legend(streamlit: Any) -> None:
     )
 
 
+def _format_prediction_history(predictions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Convert raw prediction logs into rows suitable for a Streamlit table."""
+
+    rows: list[dict[str, Any]] = []
+    for entry in reversed(predictions):
+        if not isinstance(entry, dict):
+            continue
+
+        input_data = entry.get("input", {})
+        if not isinstance(input_data, dict):
+            input_data = {}
+
+        probabilities = sorted_probabilities(entry.get("probabilities", {}))
+        top_probability = probabilities[0]["probability"] if probabilities else None
+        severity_info = describe_severity(entry.get("prediction"))
+
+        rows.append(
+            {
+                "Czas": entry.get("timestamp", "-"),
+                "Wynik": severity_info["label"],
+                "Pewność": None if top_probability is None else f"{top_probability:.0%}",
+                "Pogoda": input_data.get("weather", "-"),
+                "Światło": input_data.get("light", "-"),
+                "Limit": input_data.get("speed_limit", "-"),
+            }
+        )
+
+    return rows
+
+
+def _render_prediction_history(streamlit: Any, api_url: str) -> None:
+    """Render recent predictions from the API in the sidebar."""
+
+    with streamlit.sidebar.expander("Historia predykcji", expanded=False):
+        history_limit = streamlit.number_input(
+            "Liczba wpisów",
+            min_value=1,
+            max_value=50,
+            value=10,
+            step=1,
+            key="prediction_history_limit",
+        )
+
+        try:
+            recent_payload = fetch_recent_predictions(api_url, limit=int(history_limit))
+        except PredictionAPIError as exc:
+            streamlit.caption("Nie udało się pobrać historii predykcji.")
+            streamlit.caption(str(exc))
+            return
+
+        predictions = recent_payload.get("predictions", [])
+        if not isinstance(predictions, list) or not predictions:
+            streamlit.caption("Brak zapisanych predykcji.")
+            return
+
+        history_rows = _format_prediction_history(predictions)
+        streamlit.dataframe(
+            pd.DataFrame(history_rows),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
+def _render_api_status(streamlit: Any, api_url: str) -> None:
+    """Render API readiness details in the sidebar."""
+
+    try:
+        health = check_api_health(api_url)
+    except PredictionAPIError as exc:
+        streamlit.sidebar.error("API niedostępne - uruchom backend FastAPI.")
+        streamlit.sidebar.caption(str(exc))
+    else:
+        if health.get("model_loaded"):
+            streamlit.sidebar.success("API działa, model załadowany.")
+        else:
+            streamlit.sidebar.warning("API działa, ale brak modelu (wynik może być UNKNOWN).")
+        with streamlit.sidebar.expander("Szczegóły API"):
+            streamlit.json(health)
+
+
+def _render_prediction_result(
+    streamlit: Any,
+    api_url: str,
+    form_values: Mapping[str, Any],
+    reference_year: int,
+) -> None:
+    """Send the form payload to the API and render the prediction result."""
+
+    payload = build_prediction_payload(form_values, reference_year=reference_year)
+
+    with streamlit.expander("Dane wysyłane do API", expanded=False):
+        streamlit.json(payload)
+
+    try:
+        with streamlit.spinner("Wysyłam dane do API i pobieram wynik..."):
+            response = predict_via_api(api_url, payload)
+    except PredictionAPIError as exc:
+        streamlit.error(
+            "Nie udało się pobrać predykcji. Sprawdź, czy backend jest uruchomiony i czy URL jest poprawny."
+        )
+        streamlit.exception(exc)
+        return
+
+    severity_info = describe_severity(response.get("severity"))
+    probabilities = sorted_probabilities(response.get("probabilities", {}))
+
+    streamlit.subheader("Wynik predykcji")
+    metric_left, metric_middle, metric_right = streamlit.columns(3)
+    metric_left.metric("Klasa", severity_info["label"])
+    metric_middle.metric(
+        "Czy doszło do obrażeń?",
+        "Tak" if severity_info["injury_detected"] is True else "Nie" if severity_info["injury_detected"] is False else "Brak danych",
+    )
+    metric_right.metric("Timestamp", str(response.get("timestamp", "-")))
+
+    if severity_info["injury_detected"] is True:
+        streamlit.warning(severity_info["description"])
+    elif severity_info["injury_detected"] is False:
+        streamlit.success(severity_info["description"])
+    else:
+        streamlit.info(severity_info["description"])
+
+    if probabilities:
+        probability_frame = pd.DataFrame(probabilities)
+        streamlit.subheader("Prawdopodobieństwa klas")
+        streamlit.bar_chart(probability_frame.set_index("label"))
+        streamlit.dataframe(probability_frame, use_container_width=True, hide_index=True)
+    else:
+        streamlit.info("Model nie zwrócił prawdopodobieństw dla tej predykcji.")
+
+    with streamlit.expander("Surowa odpowiedź API", expanded=False):
+        streamlit.json(response)
+
+
 def main() -> None:
     """Run the Streamlit application."""
 
@@ -471,68 +606,17 @@ def main() -> None:
         """
     )
 
-    # Automatyczne sprawdzenie połączenia z API przy starcie.
-    try:
-        health = check_api_health(api_url)
-    except PredictionAPIError as exc:
-        st.sidebar.error("API niedostępne - uruchom backend FastAPI.")
-        st.sidebar.caption(str(exc))
-    else:
-        if health.get("model_loaded"):
-            st.sidebar.success("API działa, model załadowany.")
-        else:
-            st.sidebar.warning("API działa, ale brak modelu (wynik może być UNKNOWN).")
-        with st.sidebar.expander("Szczegóły API"):
-            st.json(health)
-
     form_state = _render_form(st, defaults, options)
-    if not form_state["submitted"]:
-        return
-
-    payload = build_prediction_payload(form_state["form_values"], reference_year=defaults["crash_year"])
-
-    with st.expander("Dane wysyłane do API", expanded=False):
-        st.json(payload)
-
-    try:
-        with st.spinner("Wysyłam dane do API i pobieram wynik..."):
-            response = predict_via_api(api_url, payload)
-    except PredictionAPIError as exc:
-        st.error(
-            "Nie udało się pobrać predykcji. Sprawdź, czy backend jest uruchomiony i czy URL jest poprawny."
+    if form_state["submitted"]:
+        _render_prediction_result(
+            st,
+            api_url,
+            form_state["form_values"],
+            reference_year=defaults["crash_year"],
         )
-        st.exception(exc)
-        return
 
-    severity_info = describe_severity(response.get("severity"))
-    probabilities = sorted_probabilities(response.get("probabilities", {}))
-
-    st.subheader("Wynik predykcji")
-    metric_left, metric_middle, metric_right = st.columns(3)
-    metric_left.metric("Klasa", severity_info["label"])
-    metric_middle.metric(
-        "Czy doszło do obrażeń?",
-        "Tak" if severity_info["injury_detected"] is True else "Nie" if severity_info["injury_detected"] is False else "Brak danych",
-    )
-    metric_right.metric("Timestamp", str(response.get("timestamp", "-")))
-
-    if severity_info["injury_detected"] is True:
-        st.warning(severity_info["description"])
-    elif severity_info["injury_detected"] is False:
-        st.success(severity_info["description"])
-    else:
-        st.info(severity_info["description"])
-
-    if probabilities:
-        probability_frame = pd.DataFrame(probabilities)
-        st.subheader("Prawdopodobieństwa klas")
-        st.bar_chart(probability_frame.set_index("label"))
-        st.dataframe(probability_frame, use_container_width=True, hide_index=True)
-    else:
-        st.info("Model nie zwrócił prawdopodobieństw dla tej predykcji.")
-
-    with st.expander("Surowa odpowiedź API", expanded=False):
-        st.json(response)
+    _render_api_status(st, api_url)
+    _render_prediction_history(st, api_url)
 
 
 if __name__ == "__main__":
