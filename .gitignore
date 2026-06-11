@@ -11,8 +11,8 @@ wymagania.pdf
 # dokumentacja w wersji docx - tylko lokalnie
 docs/dokumentacja.docx
 
-# plan prezentacji - tylko lokalnie
-plan_prezentacji.md
+# notatki lokalne
+plan.md
 
 ##########################
 # KEDRO PROJECT
