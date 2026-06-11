@@ -8,6 +8,12 @@ _notatki*
 # pdf z wymaganiami - trzymamy lokalnie, poza repo
 wymagania.pdf
 
+# dokumentacja w wersji docx - tylko lokalnie
+docs/dokumentacja.docx
+
+# notatki lokalne
+plan.md
+
 ##########################
 # KEDRO PROJECT
 

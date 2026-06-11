@@ -1,62 +1,88 @@
-<mxfile host="app.diagrams.net" modified="2026-05-24T00:00:00.000Z" agent="Copilot" version="24.7.7" type="device">
-  <diagram id="crash-architecture" name="Crash Architecture">
-    <mxGraphModel dx="1222" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+<mxfile host="app.diagrams.net" modified="2026-06-08T20:41:17.602Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" etag="x7kQpR2nWb4cT9mE3aLd" version="24.7.7" type="device">
+  <diagram id="crash-architecture" name="Architektura">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="2" value="Raw CSV data\ndata/01_raw" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="40" y="120" width="160" height="70" as="geometry" />
+        <mxCell id="n1" value="crash_data.csv&#10;data/01_raw" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="3" value="Kedro data_preparation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
-          <mxGeometry x="240" y="120" width="180" height="70" as="geometry" />
+        <mxCell id="n2" value="Kedro&#10;data_preparation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="260" y="80" width="180" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="4" value="crash_features.parquet\ndata/03_primary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="470" y="120" width="180" height="70" as="geometry" />
+        <mxCell id="n3" value="crash_features.parquet&#10;data/03_primary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="500" y="80" width="180" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="5" value="Modeling / tuning / AutoML" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
-          <mxGeometry x="700" y="120" width="200" height="70" as="geometry" />
+        <mxCell id="n4" value="Trening: baseline /&#10;tuning / AutoML" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="740" y="80" width="200" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="6" value="Wytrenowany model\ndata/06_models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
-          <mxGeometry x="940" y="120" width="180" height="70" as="geometry" />
+        <mxCell id="n5" value="model.pkl&#10;data/06_models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="80" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="7" value="FastAPI /predict" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="940" y="250" width="180" height="70" as="geometry" />
+        <mxCell id="n6" value="encoders.pkl&#10;data/06_models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="260" y="210" width="180" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="8" value="predictions.jsonl\nlogs/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
-          <mxGeometry x="700" y="250" width="200" height="70" as="geometry" />
+        <mxCell id="n7" value="MLflow&#10;(eksperymenty)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="740" y="210" width="200" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="9" value="Drift monitoring\nscripts/run_drift_monitoring.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="470" y="250" width="180" height="70" as="geometry" />
+        <mxCell id="n8" value="Monitoring driftu&#10;(Evidently)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="500" y="210" width="180" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="10" value="drift_report.html\ndata/08_reporting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
-          <mxGeometry x="240" y="250" width="180" height="70" as="geometry" />
+        <mxCell id="n9" value="drift_report.html&#10;data/08_reporting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="500" y="340" width="180" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="11" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="2" target="3">
+        <mxCell id="n10" value="FastAPI&#10;/predict /health" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="210" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n11" value="Streamlit UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="740" y="340" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n12" value="predictions.jsonl&#10;logs/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="340" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n1" target="n2">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="12" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="3" target="4">
+        <mxCell id="e2" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n2" target="n3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="13" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="4" target="5">
+        <mxCell id="e3" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n2" target="n6">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="14" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="5" target="6">
+        <mxCell id="e4" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n3" target="n4">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="15" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="6" target="7">
+        <mxCell id="e5" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n4" target="n5">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="16" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="7" target="8">
+        <mxCell id="e6" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n4" target="n7">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="17" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="4" target="9">
+        <mxCell id="e7" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n5" target="n10">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="18" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="9" target="10">
+        <mxCell id="e8" style="endArrow=block;html=1;rounded=0;strokeWidth=2;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="n6" target="n10">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="305" />
+              <mxPoint x="960" y="305" />
+              <mxPoint x="960" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n3" target="n8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n8" target="n9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n11" target="n10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="n10" target="n12">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
 </mxfile>
-
