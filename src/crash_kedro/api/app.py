@@ -65,6 +65,12 @@ TRAINING_FEATURE_ORDER = [
     "is_bad_weather",
     "is_wet_surface",
     "vehicle_age",
+    "time_of_day",
+    "is_rush_hour",
+    "vehicle_age_band",
+    "light_weather_combo",
+    "weather_surface_combo",
+    "collision_control_combo",
 ]
 
 MODEL_CANDIDATES = [
@@ -206,6 +212,8 @@ def build_prediction_frame(input_data: CrashInput) -> pd.DataFrame:
     """Buduje ramke cech zgodna z pipeline'em treningowym."""
 
     current_year = int(input_data.crash_year)
+    vehicle_age = max(current_year - int(input_data.vehicle_year), 0)
+    crash_hour = int(input_data.crash_hour)
     feature_row: dict[str, Any] = {column: None for column in TRAINING_FEATURE_ORDER}
     feature_row.update(
         {
@@ -224,16 +232,34 @@ def build_prediction_frame(input_data: CrashInput) -> pd.DataFrame:
             "Driverless Vehicle": input_data.driverless_vehicle,
             "Parked Vehicle": input_data.parked_vehicle,
             "Vehicle Year": int(input_data.vehicle_year),
-            "crash_hour": int(input_data.crash_hour),
+            "crash_hour": crash_hour,
             "crash_dayofweek": int(input_data.crash_dayofweek),
             "crash_month": int(input_data.crash_month),
             "crash_year": current_year,
             "is_night": int("DARK" in input_data.light.upper()),
             "is_bad_weather": int(input_data.weather not in {"CLEAR", "CLOUDY"}),
             "is_wet_surface": int(input_data.surface_condition != "DRY"),
-            "vehicle_age": max(current_year - int(input_data.vehicle_year), 0),
+            "vehicle_age": vehicle_age,
             "Latitude": 0.0,
             "Longitude": 0.0,
+            "time_of_day": pd.cut(
+                pd.Series([crash_hour]),
+                bins=[-1, 5, 11, 15, 19, 23],
+                labels=["night", "morning", "midday", "afternoon", "evening"],
+                include_lowest=True,
+            ).astype(str).iat[0],
+            "is_rush_hour": int(crash_hour in {7, 8, 9, 16, 17, 18}),
+            "vehicle_age_band": pd.cut(
+                pd.Series([vehicle_age]),
+                bins=[-1, 3, 7, 15, 25, 50],
+                labels=["new", "young", "mid_age", "old", "very_old"],
+                include_lowest=True,
+            ).astype(str).iat[0],
+            "light_weather_combo": f"{input_data.light}__{input_data.weather}",
+            "weather_surface_combo": f"{input_data.weather}__{input_data.surface_condition}",
+            "collision_control_combo": (
+                f"{input_data.collision_type}__{input_data.traffic_control}"
+            ),
         }
     )
 

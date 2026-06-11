@@ -10,6 +10,31 @@ from sklearn.metrics import (
     f1_score,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.utils.class_weight import compute_class_weight
+
+
+def _resolve_class_weight(y_train: pd.Series, parameters: dict | None):
+    """Zwraca wagi klas dla modelu bazowego.
+
+    Domyślnie wzmacnia klasę SERIOUS, ale pozostaje bezpieczne dla multiclass.
+    """
+    parameters = parameters or {}
+    strategy = str(parameters.get("class_weight_strategy", "balanced_plus")).lower()
+
+    if strategy in {"none", "off", "disabled"}:
+        return None
+
+    if strategy in {"balanced", "balanced_subsample"}:
+        return strategy
+
+    classes = pd.Index(pd.unique(y_train)).to_numpy()
+    base_weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train)
+    multipliers = parameters.get("class_weight_multipliers", {}) or {}
+
+    return {
+        cls: float(weight) * float(multipliers.get(cls, 1.0))
+        for cls, weight in zip(classes, base_weights, strict=False)
+    }
 
 
 def split_data(df: pd.DataFrame, parameters: dict):
@@ -25,11 +50,11 @@ def split_data(df: pd.DataFrame, parameters: dict):
     )
 
 
-def train_model(X_train, y_train):
+def train_model(X_train, y_train, parameters: dict | None = None):
     # baseline - prosty Random Forest, lepsze modele sa w pipeline tuning
     params = {
         "n_estimators": 100,
-        "class_weight": "balanced",  # bardzo wazne, dane sa mocno niezbalansowane
+        "class_weight": _resolve_class_weight(y_train, parameters),
         "random_state": 42,
         "n_jobs": -1,
     }
@@ -58,7 +83,7 @@ def evaluate_model(model, X_test, y_test):
     f1_weighted = f1_score(y_test, preds, average="weighted")
     f1_macro = f1_score(y_test, preds, average="macro")
 
-    report = classification_report(y_test, preds)
+    report = classification_report(y_test, preds, zero_division=0)
     print(report)
 
     metrics = {

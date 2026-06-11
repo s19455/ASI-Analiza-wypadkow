@@ -10,7 +10,7 @@ Tests validate the data preparation transformations including:
 import pandas as pd
 import pytest
 
-from src.crash_kedro.pipelines.data_preparation.nodes import encode_features
+from src.crash_kedro.pipelines.data_preparation.nodes import encode_features, engineer_features
 
 
 class TestEncodeFeatures:
@@ -248,4 +248,44 @@ class TestEncodeFeatures:
 
         assert len(df_encoded.columns) == len(sample_df.columns), \
             "Number of columns should be preserved."
+
+    def test_engineer_features_adds_interactions_and_buckets(self) -> None:
+        """Test that engineer_features creates richer categorical/time features."""
+        df = pd.DataFrame({
+            "Crash Date/Time": ["2024-01-01 08:30:00", "2024-01-01 20:15:00"],
+            "Light": ["DARK - LIGHTS ON", "DAYLIGHT"],
+            "Weather": ["RAIN", "CLEAR"],
+            "Surface Condition": ["WET", "DRY"],
+            "Vehicle Year": [2018, 2023],
+            "Collision Type": ["ANGLE", "REAR END"],
+            "Traffic Control": ["STOP SIGN", "NONE"],
+            "Vehicle Type": ["SEDAN", "SUV"],
+            "Vehicle Damage": ["DISABLED", "FUNCTIONAL"],
+        })
+
+        engineered = engineer_features(df)
+
+        expected_columns = {
+            "crash_hour",
+            "crash_dayofweek",
+            "crash_month",
+            "crash_year",
+            "time_of_day",
+            "is_rush_hour",
+            "vehicle_age",
+            "vehicle_age_band",
+            "light_weather_combo",
+            "weather_surface_combo",
+            "collision_control_combo",
+            "vehicle_damage_combo",
+        }
+
+        for column in expected_columns:
+            assert column in engineered.columns, f"Brak oczekiwanej cechy: {column}"
+
+        assert engineered.loc[0, "time_of_day"] == "morning"
+        assert engineered.loc[1, "time_of_day"] == "evening"
+        assert engineered.loc[0, "is_rush_hour"] == 1
+        assert engineered.loc[0, "light_weather_combo"] == "DARK - LIGHTS ON__RAIN"
+        assert engineered.loc[0, "weather_surface_combo"] == "RAIN__WET"
 

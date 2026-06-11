@@ -6,9 +6,20 @@ import logging
 
 import pandas as pd
 
-from crash_kedro.utils.encoders import fit_encoders, transform_with_encoders
+from ...utils.encoders import fit_encoders, transform_with_encoders
 
 logger = logging.getLogger(__name__)
+
+
+def _combo_feature(df: pd.DataFrame, columns: list[str], new_column: str) -> None:
+    """Tworzy cechę złożoną z kilku kolumn tekstowych, jeśli wszystkie istnieją."""
+    if all(column in df.columns for column in columns):
+        df[new_column] = (
+            df[columns]
+            .fillna("UNKNOWN")
+            .astype(str)
+            .agg("__".join, axis=1)
+        )
 
 
 def drop_unnecessary_columns(df: pd.DataFrame, parameters: dict) -> pd.DataFrame:
@@ -36,6 +47,13 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
         df["crash_dayofweek"] = df["Crash Date/Time"].dt.dayofweek
         df["crash_month"] = df["Crash Date/Time"].dt.month
         df["crash_year"] = df["Crash Date/Time"].dt.year
+        df["time_of_day"] = pd.cut(
+            df["crash_hour"],
+            bins=[-1, 5, 11, 15, 19, 23],
+            labels=["night", "morning", "midday", "afternoon", "evening"],
+            include_lowest=True,
+        ).astype(str)
+        df["is_rush_hour"] = df["crash_hour"].isin([7, 8, 9, 16, 17, 18]).astype(int)
         df = df.drop(columns=["Crash Date/Time"])
 
     if "Light" in df.columns:
@@ -51,6 +69,27 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
         current_year = pd.Timestamp.now().year
         df["vehicle_age"] = current_year - df["Vehicle Year"]
         df["vehicle_age"] = df["vehicle_age"].clip(lower=0, upper=50)
+        df["vehicle_age_band"] = pd.cut(
+            df["vehicle_age"],
+            bins=[-1, 3, 7, 15, 25, 50],
+            labels=["new", "young", "mid_age", "old", "very_old"],
+            include_lowest=True,
+        ).astype(str)
+
+    _combo_feature(df, ["Light", "Weather"], "light_weather_combo")
+    _combo_feature(df, ["Weather", "Surface Condition"], "weather_surface_combo")
+    _combo_feature(df, ["Collision Type", "Traffic Control"], "collision_control_combo")
+    _combo_feature(df, ["Vehicle Type", "Vehicle Damage"], "vehicle_damage_combo")
+
+    airbag_columns = [column for column in df.columns if "airbag" in column.lower()]
+    if airbag_columns:
+        airbag_text = df[airbag_columns].fillna("").astype(str).agg(" ".join, axis=1)
+        df["airbag_deployed"] = airbag_text.str.contains(
+            r"DEPLOY|DEPLOYED|ACTIV|YES|TRUE",
+            case=False,
+            regex=True,
+            na=False,
+        ).astype(int)
 
     return df
 

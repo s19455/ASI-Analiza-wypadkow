@@ -2,6 +2,22 @@ test_size: 0.2
 random_state: 42
 target_column: "Injury Severity"
 
+selection_metric: "f1_macro"
+optimization_metric: "f1_macro"
+class_weight_strategy: "balanced_plus"
+class_weight_multipliers:
+  NO_INJURY: 1.0
+  MINOR: 1.0
+  SERIOUS: 6.0
+
+sampling_strategy: "none"
+sampling_ratio: 0.2
+cv_folds: 3
+n_trials: 50
+show_progress_bar: true
+smote_k_neighbors: 5
+adasyn_n_neighbors: 5
+
 severity_mapping:
   NO_INJURY:
     - "NO APPARENT INJURY"

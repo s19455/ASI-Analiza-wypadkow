@@ -12,7 +12,7 @@ PROJECT_SRC = Path(__file__).resolve().parents[2] / "src"
 if str(PROJECT_SRC) not in sys.path:
     sys.path.insert(0, str(PROJECT_SRC))
 
-from crash_kedro.api.app import (  # noqa: E402
+from src.crash_kedro.api.app import (  # noqa: E402
     CrashInput,
     build_prediction_frame,
     health_status,
@@ -64,6 +64,12 @@ def test_build_prediction_frame_uses_training_column_order() -> None:
         "is_bad_weather",
         "is_wet_surface",
         "vehicle_age",
+        "time_of_day",
+        "is_rush_hour",
+        "vehicle_age_band",
+        "light_weather_combo",
+        "weather_surface_combo",
+        "collision_control_combo",
     ]
 
     assert list(frame.columns) == expected_columns
