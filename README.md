@@ -116,6 +116,10 @@ python scripts/run_drift_monitoring.py      # monitoring driftu
 Frontend Streamlit łączy się z API (domyślnie `http://localhost:8000`, można zmienić
 zmienną `PREDICTION_API_URL`). Najpierw trzeba uruchomić backend FastAPI.
 
+W panelu bocznym aplikacji są szybkie scenariusze testowe (np. "noc i mokra nawierzchnia"),
+które jednym kliknięciem wypełniają formularz, oraz historia ostatnich predykcji
+pobierana z endpointu `GET /predictions/recent`.
+
 > Uwaga: CI i Docker używają Pythona 3.12. Pełny zestaw ML (`scikit-learn`, `xgboost`,
 > `lightgbm`, `autogluon.tabular`) instaluje się z `requirements.txt`. Do samego API +
 > Streamlit wystarczy `requirements-api.txt`.

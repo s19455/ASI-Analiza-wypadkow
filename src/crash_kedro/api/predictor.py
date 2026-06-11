@@ -295,3 +295,20 @@ def predict_via_api(
         payload=payload,
         timeout=timeout,
     )
+
+
+def fetch_recent_predictions(
+    base_url: str | None,
+    limit: int = 10,
+    timeout: float = DEFAULT_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
+    """Pobiera z API ostatnie zapisane predykcje."""
+
+    normalized_base_url = normalize_api_base_url(base_url)
+    safe_limit = max(int(limit), 0)
+    return _json_request(
+        f"{normalized_base_url}/predictions/recent?n={safe_limit}",
+        method="GET",
+        payload=None,
+        timeout=timeout,
+    )
